@@ -5,7 +5,10 @@ import { useStore } from '@/store/useStore';
 import CarCard from '@/components/CarCard';
 import EmptyState from '@/components/EmptyState';
 import { CarStatus, Car } from '@/types';
-import { getConfirmedCount, generateInvitationText, getDepositCount } from '@/utils';
+import {
+  getConfirmedCount, generateInvitationText, getDepositCount,
+  getDepositLedger, getArrivalProgress, getArrivalStatusText
+} from '@/utils';
 import classnames from 'classnames';
 import styles from './index.module.scss';
 
@@ -75,9 +78,12 @@ const CarsPage: React.FC = () => {
   const handleViewList = (car: Car) => {
     const confirmed = car.players.filter(p => p.confirmed);
     const { paid, total } = getDepositCount(car);
-    const list = confirmed.map((p, i) => `${i + 1}. ${p.name}${p.depositPaid ? ' ✓已付' : ' ⏳待付'}`).join('\n');
+    const arrival = getArrivalProgress(car);
+    const list = confirmed.map((p, i) =>
+      `${i + 1}. ${p.name}${p.depositPaid ? ' ✓已付' : ' ⏳待付'} [${getArrivalStatusText(p.arrivalStatus)}]`
+    ).join('\n');
     Taro.showModal({
-      title: `🔒 已锁定最终名单（${paid}/${total}已付定金）`,
+      title: `🔒 最终名单（${paid}/${total}已付·${arrival.arrived.length + arrival.confirmed.length}/${arrival.total}到店）`,
       content: list,
       showCancel: false,
       confirmColor: '#7B4BFF'
@@ -85,62 +91,72 @@ const CarsPage: React.FC = () => {
   };
 
   const handleCopyInfo = (car: Car) => {
-    const text = generateInvitationText(car, storeNotice, !!car.finalConfirmed);
-    Taro.setClipboardData({
-      data: text,
-      success: () => Taro.showToast({ title: '邀请信息已复制', icon: 'success' })
+    if (!car.finalConfirmed) {
+      const text = generateInvitationText(car, storeNotice, false, 'all');
+      Taro.setClipboardData({
+        data: text,
+        success: () => Taro.showToast({ title: '邀请信息已复制', icon: 'success' })
+      });
+      return;
+    }
+    Taro.showActionSheet({
+      itemList: [
+        '📋 复制通用版（完整信息）',
+        '🎮 复制给已付的人（突出到店）',
+        '💴 复制给未付的人（突出催付）'
+      ],
+      success: (res) => {
+        const audience = res.tapIndex === 0 ? 'all' : res.tapIndex === 1 ? 'paid' : 'unpaid';
+        const text = generateInvitationText(car, storeNotice, true, audience as any);
+        Taro.setClipboardData({
+          data: text,
+          success: () => Taro.showToast({ title: '已复制到剪贴板', icon: 'success' })
+        });
+      }
     });
   };
 
   const handleSendNotice = (car: Car) => {
-    if (car.noticeSent && car.depositSent) {
-      Taro.showToast({ title: '已发送过全部提醒', icon: 'none' });
-      return;
-    }
     Taro.showModal({
       title: '一键发送提醒',
-      content: '将向所有玩家发送定金提醒和到店须知？',
+      content: '将向未付玩家重发定金提醒，向所有人重发到店须知？（不会清空已付状态）',
       confirmColor: '#7B4BFF',
       success: (res) => {
         if (res.confirm) {
-          if (!car.depositSent) sendDepositReminder(car.id);
-          if (!car.noticeSent) sendNotice(car.id);
-          Taro.showToast({ title: '已发送全部提醒', icon: 'success' });
+          sendDepositReminder(car.id);
+          sendNotice(car.id);
+          Taro.showToast({ title: '已重发全部提醒', icon: 'success' });
         }
       }
     });
   };
 
   const handleManageDeposit = (car: Car) => {
-    const confirmed = car.players.filter(p => p.confirmed);
-    const options = confirmed.map(p =>
-      `${p.name}  ${p.depositPaid ? '✅已付' : '⏳待付'}  ¥${car.depositAmount}`
-    );
+    const ledger = getDepositLedger(car);
+    const options = [
+      `📊 台账：应收¥${ledger.totalReceivable} · 已收¥${ledger.totalReceived} · 待收¥${ledger.totalPending}`,
+      ...ledger.unpaidPlayers.map(p => `💴 催付：${p.name}（待付¥${car.depositAmount}）`),
+      ...ledger.paidPlayers.map(p => `✅ 已付：${p.name}（点击可撤销）`)
+    ];
     Taro.showActionSheet({
       itemList: options,
       success: (res) => {
-        const player = confirmed[res.tapIndex];
-        if (player.depositPaid) {
+        if (res.tapIndex === 0) return;
+        const unpaidIdx = res.tapIndex - 1;
+        if (unpaidIdx < ledger.unpaidPlayers.length) {
+          const player = ledger.unpaidPlayers[unpaidIdx];
+          sendDepositReminder(car.id, player.id);
+          Taro.showToast({ title: `已单独提醒${player.name}`, icon: 'success' });
+        } else {
+          const player = ledger.paidPlayers[unpaidIdx - ledger.unpaidPlayers.length];
           Taro.showModal({
             title: '取消定金标记',
-            content: `确定将「${player.name}」改为未付定金？`,
+            content: `确定将「${player.name}」改为未付？`,
             confirmColor: '#7B4BFF',
             success: (r) => {
               if (r.confirm) {
                 togglePlayerDeposit(car.id, player.id, false);
                 Taro.showToast({ title: '已改为未付', icon: 'success' });
-              }
-            }
-          });
-        } else {
-          Taro.showModal({
-            title: '标记已付定金',
-            content: `确定将「${player.name}」标记为已付¥${car.depositAmount}定金？`,
-            confirmColor: '#7B4BFF',
-            success: (r) => {
-              if (r.confirm) {
-                togglePlayerDeposit(car.id, player.id, true);
-                Taro.showToast({ title: '已标记已付', icon: 'success' });
               }
             }
           });
@@ -162,14 +178,15 @@ const CarsPage: React.FC = () => {
     }
 
     if (isLocked) {
+      const arrival = getArrivalProgress(car);
       const props: any = {};
       props.onViewList = () => handleViewList(car);
       props.onCopyInfo = () => handleCopyInfo(car);
+      props.arrivalCount = arrival.arrived.length + arrival.confirmed.length;
+      props.arrivalTotal = arrival.total;
       if (canManage) {
         props.onManageDeposit = () => handleManageDeposit(car);
-        if (!car.noticeSent || !car.depositSent) {
-          props.onSendNotice = () => handleSendNotice(car);
-        }
+        props.onSendNotice = () => handleSendNotice(car);
       }
       return props;
     }

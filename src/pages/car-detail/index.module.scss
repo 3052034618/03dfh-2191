@@ -508,3 +508,85 @@
   font-size: 20rpx;
   font-weight: 500;
 }
+
+.ledgerGrid {
+  display: flex;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-lg;
+}
+
+.ledgerItem {
+  flex: 1;
+  padding: $spacing-md $spacing-sm;
+  background: $color-primary-bg;
+  border-radius: $radius-md;
+  text-align: center;
+  border: 1px solid $color-primary-border;
+}
+
+.ledgerValue {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: $color-primary-light;
+  display: block;
+  margin-bottom: 4rpx;
+}
+
+.ledgerLabel {
+  font-size: 20rpx;
+  color: $color-text-secondary;
+}
+
+.arrivalStats {
+  display: flex;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-md;
+}
+
+.arrivalStatItem {
+  flex: 1;
+  padding: $spacing-sm;
+  background: $color-primary-bg;
+  border-radius: $radius-md;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4rpx;
+}
+
+.arrivalStatDot {
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: $radius-round;
+}
+
+.arrivalStatCount {
+  font-size: 32rpx;
+  font-weight: 700;
+}
+
+.arrivalStatLabel {
+  font-size: 20rpx;
+  color: $color-text-secondary;
+}
+
+.arrivalTip {
+  background: rgba(123, 75, 255, 0.08);
+  padding: $spacing-sm $spacing-md;
+  border-radius: $radius-sm;
+  font-size: 22rpx;
+  color: $color-text-primary;
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.playerArrivalStatus {
+  margin-top: 4rpx;
+  font-size: 20rpx;
+  font-weight: 500;
+  padding: 2rpx 10rpx;
+  background: rgba(123, 75, 255, 0.08);
+  border-radius: $radius-xs;
+}

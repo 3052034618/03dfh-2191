@@ -1002,6 +1002,75 @@
   border-color: rgba(123, 75, 255, 0.4);
 }
 
+.calendarSlotConflict {
+  background: linear-gradient(135deg, rgba(245, 63, 63, 0.18) 0%, transparent 60%);
+  border-color: rgba(245, 63, 63, 0.6);
+  animation: pulseConflict 2s ease-in-out infinite;
+}
+
+@keyframes pulseConflict {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(245, 63, 63, 0.3); }
+  50% { box-shadow: 0 0 0 6rpx rgba(245, 63, 63, 0.1); }
+}
+
+.conflictBadge {
+  position: absolute;
+  top: 8rpx;
+  right: 8rpx;
+  padding: 2rpx 10rpx;
+  background: $color-error;
+  color: #fff;
+  border-radius: $radius-round;
+  font-size: 18rpx;
+  font-weight: 600;
+}
+
+.conflictAlert {
+  background: rgba(245, 63, 63, 0.1);
+  border: 1px solid rgba(245, 63, 63, 0.3);
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  margin-bottom: $spacing-lg;
+}
+
+.conflictAlertTitle {
+  font-size: $font-size-sm;
+  font-weight: 600;
+  color: $color-error;
+  display: block;
+  margin-bottom: $spacing-sm;
+}
+
+.conflictItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-xs 0;
+  border-bottom: 1px solid rgba(245, 63, 63, 0.15);
+
+  &:last-child { border-bottom: none; }
+}
+
+.conflictText {
+  flex: 1;
+  font-size: 22rpx;
+  color: $color-text-primary;
+  @include text-ellipsis;
+}
+
+.conflictAction {
+  padding: 4rpx 16rpx;
+  background: $color-error;
+  color: #fff;
+  border-radius: $radius-xs;
+  font-size: 22rpx;
+  font-weight: 500;
+  margin-left: $spacing-sm;
+  flex-shrink: 0;
+}
+
+.legendDotConflict { background: $color-error; }
+
 .calendarSlotTime {
   font-size: $font-size-lg;
   font-weight: $font-weight-bold;

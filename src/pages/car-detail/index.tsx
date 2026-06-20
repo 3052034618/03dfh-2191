@@ -3,14 +3,22 @@ import { View, Text, Image, ScrollView } from '@tarojs/components';
 import Taro, { useRouter } from '@tarojs/taro';
 import { useStore } from '@/store/useStore';
 import StatusBadge from '@/components/StatusBadge';
-import { formatDate, getConfirmedCount, getRemainingCount, getGenderCount, calcDepositTotal, getStatusText, getDepositCount, generateInvitationText } from '@/utils';
+import {
+  formatDate, getConfirmedCount, getRemainingCount, getGenderCount, calcDepositTotal,
+  getStatusText, getDepositCount, generateInvitationText, getDepositLedger,
+  getArrivalProgress, getArrivalStatusText, getArrivalStatusColor, formatArrivalTime
+} from '@/utils';
+import { ArrivalStatus } from '@/types';
 import classnames from 'classnames';
 import styles from './index.module.scss';
 
 const CarDetailPage: React.FC = () => {
   const router = useRouter();
   const id = router.params.id;
-  const { cars, currentUser, storeNotice, sendDepositReminder, sendNotice, confirmFinalList, dms, scripts, togglePlayerDeposit } = useStore();
+  const {
+    cars, currentUser, storeNotice, sendDepositReminder, sendNotice,
+    confirmFinalList, dms, scripts, togglePlayerDeposit, setPlayerArrivalStatus
+  } = useStore();
 
   const car = useMemo(() => cars.find(c => c.id === id), [cars, id]);
   const script = useMemo(() => scripts.find(s => s.id === car?.scriptId), [scripts, car?.scriptId]);
@@ -30,7 +38,9 @@ const CarDetailPage: React.FC = () => {
   const { male, female } = getGenderCount(car.players);
   const depositTotal = calcDepositTotal(car);
   const { paid, total, unpaid } = getDepositCount(car);
+  const ledger = getDepositLedger(car);
   const depositProgress = total > 0 ? Math.round((paid / total) * 100) : 0;
+  const arrivalProg = getArrivalProgress(car);
 
   const needMale = Math.max(0, car.genderRequirement.male - male);
   const needFemale = Math.max(0, car.genderRequirement.female - female);
@@ -69,21 +79,56 @@ const CarDetailPage: React.FC = () => {
     Taro.showToast({ title: '邀请链接已复制', icon: 'success' });
   };
 
-  const handleCopyInfo = () => {
-    const text = generateInvitationText(car, storeNotice, !!car.finalConfirmed);
+  const handleCopyAll = () => {
+    const text = generateInvitationText(car, storeNotice, !!car.finalConfirmed, 'all');
     Taro.setClipboardData({
       data: text,
-      success: () => Taro.showToast({ title: '邀请信息已复制', icon: 'success' })
+      success: () => Taro.showToast({ title: '通用版已复制', icon: 'success' })
+    });
+  };
+
+  const handleCopyPaid = () => {
+    const text = generateInvitationText(car, storeNotice, !!car.finalConfirmed, 'paid');
+    Taro.setClipboardData({
+      data: text,
+      success: () => Taro.showToast({ title: '已付版已复制', icon: 'success' })
+    });
+  };
+
+  const handleCopyUnpaid = () => {
+    const text = generateInvitationText(car, storeNotice, !!car.finalConfirmed, 'unpaid');
+    Taro.setClipboardData({
+      data: text,
+      success: () => Taro.showToast({ title: '催付版已复制', icon: 'success' })
+    });
+  };
+
+  const handleCopyMenu = () => {
+    if (!car.finalConfirmed) {
+      handleCopyAll();
+      return;
+    }
+    Taro.showActionSheet({
+      itemList: [
+        '📋 复制通用版（完整信息）',
+        '🎮 复制给已付定金的人（突出到店）',
+        '💴 复制给未付定金的人（突出催付）'
+      ],
+      success: (res) => {
+        if (res.tapIndex === 0) handleCopyAll();
+        else if (res.tapIndex === 1) handleCopyPaid();
+        else if (res.tapIndex === 2) handleCopyUnpaid();
+      }
     });
   };
 
   const handleViewFinalList = () => {
     const confirmedPlayers = car.players.filter(p => p.confirmed);
     const list = confirmedPlayers.map((p, i) =>
-      `${i + 1}. ${p.name}${p.role === '车头' ? '（车头）' : ''}  ${p.depositPaid ? '✓已付定金' : '⏳待付定金'}`
+      `${i + 1}. ${p.name}${p.role === '车头' ? '（车头）' : ''}  ${p.depositPaid ? '✓已付定金' : '⏳待付定金'}  [${getArrivalStatusText(p.arrivalStatus)}]`
     ).join('\n');
     Taro.showModal({
-      title: `🔒 已锁定最终名单（${paid}/${total}已付定金）`,
+      title: `🔒 已锁定最终名单（${paid}/${total}已付·${arrivalProg.arrived.length + arrivalProg.confirmed.length}/${arrivalProg.total}到店）`,
       content: list,
       showCancel: false,
       confirmColor: '#7B4BFF'
@@ -106,10 +151,10 @@ const CarDetailPage: React.FC = () => {
     });
   };
 
-  const handleRemindSingle = (playerId: string, playerName: string) => {
+  const handleRemindSingleDeposit = (playerId: string, playerName: string) => {
     Taro.showModal({
       title: '单独发送定金提醒',
-      content: `确定单独向「${playerName}」发送定金提醒？`,
+      content: `确定单独向「${playerName}」发送定金提醒？（不会重置其他已付状态）`,
       confirmColor: '#7B4BFF',
       success: (res) => {
         if (res.confirm) {
@@ -120,7 +165,52 @@ const CarDetailPage: React.FC = () => {
     });
   };
 
+  const handleRemindSingleArrival = (playerId: string, playerName: string) => {
+    Taro.showModal({
+      title: '单独发送到店提醒',
+      content: `确定单独向「${playerName}」发送到店提醒？`,
+      confirmColor: '#7B4BFF',
+      success: (res) => {
+        if (res.confirm) {
+          sendNotice(car.id, playerId);
+          Taro.showToast({ title: '已单独提醒', icon: 'success' });
+        }
+      }
+    });
+  };
+
+  const handleSetArrival = (playerId: string, playerName: string, status: ArrivalStatus) => {
+    setPlayerArrivalStatus(car.id, playerId, status);
+    Taro.showToast({ title: `${playerName}: ${getArrivalStatusText(status)}`, icon: 'success' });
+  };
+
+  const handleArrivalMenu = (playerId: string, playerName: string, _currentStatus?: ArrivalStatus) => {
+    if (!canManage) return;
+    const items = [
+      '📤 发送到店提醒',
+      '✅ 标记：已确认到店',
+      '🏠 标记：已到店',
+      '↩️  重置为未提醒'
+    ];
+    Taro.showActionSheet({
+      itemList: items,
+      success: (res) => {
+        if (res.tapIndex === 0) handleRemindSingleArrival(playerId, playerName);
+        else if (res.tapIndex === 1) handleSetArrival(playerId, playerName, 'confirmed');
+        else if (res.tapIndex === 2) handleSetArrival(playerId, playerName, 'arrived');
+        else if (res.tapIndex === 3) handleSetArrival(playerId, playerName, 'not_reminded');
+      }
+    });
+  };
+
   const displayStatusText = getStatusText(car.status, car.finalConfirmed);
+
+  const arrivalStats = [
+    { label: '未提醒', count: arrivalProg.notReminded.length, color: '#86909C', key: 'notReminded' },
+    { label: '已提醒', count: arrivalProg.reminded.length, color: '#FF7D54', key: 'reminded' },
+    { label: '已确认', count: arrivalProg.confirmed.length, color: '#00B42A', key: 'confirmed' },
+    { label: '已到店', count: arrivalProg.arrived.length, color: '#7B4BFF', key: 'arrived' }
+  ];
 
   return (
     <ScrollView className={styles.page} scrollY>
@@ -198,6 +288,78 @@ const CarDetailPage: React.FC = () => {
         </View>
       </View>
 
+      {car.finalConfirmed && (
+        <>
+          <View className={styles.card}>
+            <View className={styles.cardTitle}>
+              <Text>� 收款台账</Text>
+              <Text className={styles.cardCount}>
+                应收 ¥{ledger.totalReceivable} / 已收 ¥{ledger.totalReceived}
+              </Text>
+            </View>
+
+            <View className={styles.ledgerGrid}>
+              <View className={styles.ledgerItem}>
+                <Text className={styles.ledgerValue}>¥{ledger.totalReceivable}</Text>
+                <Text className={styles.ledgerLabel}>应收总额</Text>
+              </View>
+              <View className={styles.ledgerItem} style={{ borderColor: '#00B42A' }}>
+                <Text className={styles.ledgerValue} style={{ color: '#00B42A' }}>¥{ledger.totalReceived}</Text>
+                <Text className={styles.ledgerLabel}>已收（{ledger.paidPlayers.length}人）</Text>
+              </View>
+              <View className={styles.ledgerItem} style={{ borderColor: '#F53F3F' }}>
+                <Text className={styles.ledgerValue} style={{ color: '#F53F3F' }}>¥{ledger.totalPending}</Text>
+                <Text className={styles.ledgerLabel}>待收（{ledger.unpaidPlayers.length}人）</Text>
+              </View>
+            </View>
+
+            <View className={styles.depositProgress}>
+              <View className={styles.depositProgressHeader}>
+                <Text className={styles.depositProgressTitle}>定金收取进度</Text>
+                <Text className={styles.depositProgressValue}>
+                  {paid}/{total} 人 · ¥{paid * car.depositAmount}/¥{total * car.depositAmount}
+                </Text>
+              </View>
+              <View className={styles.depositProgressBar}>
+                <View
+                  className={styles.depositProgressFill}
+                  style={{ width: `${depositProgress}%` }}
+                />
+              </View>
+              {unpaid.length > 0 && (
+                <Text className={styles.depositUnpaid}>
+                  待付：{unpaid.map(p => p.name).join('、')}
+                </Text>
+              )}
+            </View>
+          </View>
+
+          <View className={styles.card}>
+            <View className={styles.cardTitle}>
+              <Text>🏠 到店进度</Text>
+              <Text className={styles.cardCount}>
+                {arrivalProg.arrived.length + arrivalProg.confirmed.length}/{arrivalProg.total} 人
+              </Text>
+            </View>
+
+            <View className={styles.arrivalStats}>
+              {arrivalStats.map(s => (
+                <View key={s.key} className={styles.arrivalStatItem}>
+                  <View className={styles.arrivalStatDot} style={{ background: s.color }} />
+                  <Text className={styles.arrivalStatCount} style={{ color: s.color }}>{s.count}</Text>
+                  <Text className={styles.arrivalStatLabel}>{s.label}</Text>
+                </View>
+              ))}
+            </View>
+
+            <View className={styles.arrivalTip}>
+              <Text style={{ color: '#9B7DFF' }}>⏰ 建议到店：</Text>
+              <Text>{formatArrivalTime(car.date, car.startTime)}</Text>
+            </View>
+          </View>
+        </>
+      )}
+
       <View className={styles.card}>
         <View className={styles.cardTitle}>
           <Text>👥 玩家名单</Text>
@@ -205,28 +367,6 @@ const CarDetailPage: React.FC = () => {
             已确认 {confirmed}/{car.maxPlayers} 人
           </Text>
         </View>
-
-        {car.finalConfirmed && car.depositSent && (
-          <View className={styles.depositProgress}>
-            <View className={styles.depositProgressHeader}>
-              <Text className={styles.depositProgressTitle}>💰 定金进度</Text>
-              <Text className={styles.depositProgressValue}>
-                {paid}/{total} 人已付 · ¥{paid * car.depositAmount}/¥{total * car.depositAmount}
-              </Text>
-            </View>
-            <View className={styles.depositProgressBar}>
-              <View
-                className={styles.depositProgressFill}
-                style={{ width: `${depositProgress}%` }}
-              />
-            </View>
-            {unpaid.length > 0 && (
-              <Text className={styles.depositUnpaid}>
-                待付：{unpaid.map(p => p.name).join('、')}
-              </Text>
-            )}
-          </View>
-        )}
 
         <View className={styles.playersGrid}>
           {car.players.map(p => (
@@ -239,7 +379,7 @@ const CarDetailPage: React.FC = () => {
                 <Image className={styles.playerImg} src={p.avatar} mode="aspectFill" />
                 {p.role === '车头' && <View className={styles.captainMark}>车头</View>}
                 {p.confirmed && p.role !== '车头' && <View className={styles.confirmedMark}>✓</View>}
-                {car.depositSent && canManage && (
+                {car.depositSent && canManage && p.confirmed && (
                   <View
                     className={classnames(
                       styles.depositMark,
@@ -258,12 +398,24 @@ const CarDetailPage: React.FC = () => {
               <Text className={styles.playerStatus} style={{ color: p.confirmed ? '#00B42A' : '#FF7D00' }}>
                 {p.confirmed ? '已确认' : '待确认'}
               </Text>
+              {car.finalConfirmed && p.confirmed && (
+                <Text
+                  className={styles.playerArrivalStatus}
+                  style={{ color: getArrivalStatusColor(p.arrivalStatus) }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleArrivalMenu(p.id, p.name, p.arrivalStatus);
+                  }}
+                >
+                  {canManage ? '📋 ' : ''}{getArrivalStatusText(p.arrivalStatus)}
+                </Text>
+              )}
               {car.depositSent && !p.depositPaid && canManage && p.confirmed && (
                 <View
                   className={styles.playerRemindBtn}
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleRemindSingle(p.id, p.name);
+                    handleRemindSingleDeposit(p.id, p.name);
                   }}
                 >
                   📩 催定金
@@ -286,18 +438,19 @@ const CarDetailPage: React.FC = () => {
           <>
             {car.depositSent && (
               <View className={styles.noticeCard}>
-                <View className={styles.noticeTag}>💰 已发送定金提醒</View>
+                <View className={styles.noticeTag}>💰 已发送定金提醒{car.depositSentAt ? ` · ${car.depositSentAt.slice(5, 16).replace('T', ' ')}` : ''}</View>
                 <Text className={styles.noticeText}>
                   📌 {storeNotice.depositRule}
                 </Text>
                 <Text className={styles.noticeText} style={{ color: '#FF7D54', fontWeight: 500 }}>
                   当前应收取定金：{confirmed} × ¥{car.depositAmount} = <Text style={{ fontSize: 32, fontWeight: 700 }}>¥{depositTotal}</Text>
+                  （已收¥{ledger.totalReceived}/待收¥{ledger.totalPending}）
                 </Text>
               </View>
             )}
             {car.noticeSent && (
               <View className={styles.noticeCard}>
-                <View className={styles.noticeTag}>📢 已发送到店须知</View>
+                <View className={styles.noticeTag}>📢 已发送到店须知{car.noticeSentAt ? ` · ${car.noticeSentAt.slice(5, 16).replace('T', ' ')}` : ''}</View>
                 <Text className={styles.noticeText}>🏠 {storeNotice.arrivalNotice}</Text>
                 <Text className={styles.noticeText}>⏰ {storeNotice.lateRule}</Text>
               </View>
@@ -314,21 +467,21 @@ const CarDetailPage: React.FC = () => {
           <View style={{ height: 16 }} />
           <View className={styles.btnRow} style={{ flexWrap: 'wrap' }}>
             <View
-              className={classnames(styles.btn, car.depositSent ? styles.btnDisabled : styles.btnOutline)}
+              className={classnames(styles.btn, car.depositSent ? styles.btnOutline : styles.btnOutline)}
               onClick={handleSendDeposit}
               style={{ minWidth: 220, flex: 'unset', marginBottom: 12 }}
             >
-              {car.depositSent ? '✓ 已发定金提醒' : '📤 发送定金提醒'}
+              {car.depositSent ? '📤 重发定金提醒' : '📤 发送定金提醒'}
             </View>
             <View
-              className={classnames(styles.btn, car.noticeSent ? styles.btnDisabled : styles.btnOutline)}
+              className={classnames(styles.btn, car.noticeSent ? styles.btnOutline : styles.btnOutline)}
               onClick={handleSendNotice}
               style={{ minWidth: 220, flex: 'unset', marginBottom: 12 }}
             >
-              {car.noticeSent ? '✓ 已发到店须知' : '📢 发送到店须知'}
+              {car.noticeSent ? '📢 重发到店须知' : '📢 发送到店须知'}
             </View>
             <View
-              className={classnames(styles.btn, (car.depositSent && car.noticeSent) ? styles.btnDisabled : styles.btnAccent)}
+              className={classnames(styles.btn, styles.btnAccent)}
               onClick={handleSendAll}
               style={{ minWidth: 220, flex: 'unset', marginBottom: 12 }}
             >
@@ -374,7 +527,7 @@ const CarDetailPage: React.FC = () => {
               </View>
               <View
                 className={classnames(styles.btn, styles.btnOutline)}
-                onClick={handleCopyInfo}
+                onClick={handleCopyMenu}
               >
                 📤 复制邀请信息
               </View>
@@ -385,7 +538,7 @@ const CarDetailPage: React.FC = () => {
               )}
               {canManage && car.noticeSent && (
                 <View className={classnames(styles.btn, styles.btnPrimary, styles.btnFull)}>
-                  🔒 {displayStatusText} · 等待开本
+                  🔒 {displayStatusText} · {arrivalProg.arrived.length + arrivalProg.confirmed.length}/{arrivalProg.total}人到店
                 </View>
               )}
             </>

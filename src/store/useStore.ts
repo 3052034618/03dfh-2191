@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { User, Car, Script, Room, DM, StoreNotice, Gender } from '@/types';
+import { User, Car, Script, Room, DM, StoreNotice, Gender, ArrivalStatus, ScheduleConflict } from '@/types';
 import { mockScripts } from '@/data/scripts';
 import { mockRooms } from '@/data/rooms';
 import { mockDMs } from '@/data/dms';
@@ -20,7 +20,7 @@ interface AppState {
   updateCar: (carId: string, data: Partial<Car>) => void;
   updatePlayer: (carId: string, playerId: string, data: Partial<Car['players'][0]>) => void;
   sendDepositReminder: (carId: string, playerId?: string) => void;
-  sendNotice: (carId: string) => void;
+  sendNotice: (carId: string, playerId?: string) => void;
   confirmFinalList: (carId: string) => void;
   joinCar: (carId: string, player: Car['players'][0]) => void;
   updateScript: (scriptId: string, data: Partial<Script>) => void;
@@ -28,6 +28,8 @@ interface AppState {
   updateDM: (dmId: string, data: Partial<DM>) => void;
   toggleSlot: (roomId: string, slotId: string) => void;
   togglePlayerDeposit: (carId: string, playerId: string, paid: boolean) => void;
+  setPlayerArrivalStatus: (carId: string, playerId: string, status: ArrivalStatus) => void;
+  getScheduleConflicts: (date: string) => ScheduleConflict[];
 }
 
 const mockUsers: User[] = [
@@ -76,12 +78,15 @@ export const useStore = create<AppState>((set) => ({
   sendDepositReminder: (carId: string, playerId?: string) => set((state) => ({
     cars: state.cars.map(c => {
       if (c.id !== carId) return c;
+      const now = new Date().toISOString();
       if (playerId) {
         return {
           ...c,
+          depositSent: true,
+          depositSentAt: c.depositSentAt || now,
           players: c.players.map(p =>
             p.id === playerId
-              ? { ...p, depositPaid: false, depositAmount: c.depositAmount }
+              ? { ...p, depositAmount: c.depositAmount, depositRemindedAt: now }
               : p
           )
         };
@@ -89,17 +94,51 @@ export const useStore = create<AppState>((set) => ({
       return {
         ...c,
         depositSent: true,
+        depositSentAt: now,
         players: c.players.map(p => ({
           ...p,
-          depositPaid: false,
-          depositAmount: c.depositAmount
+          depositAmount: c.depositAmount,
+          depositRemindedAt: now
         }))
       };
     })
   })),
 
-  sendNotice: (carId: string) => set((state) => ({
-    cars: state.cars.map(c => c.id === carId ? { ...c, noticeSent: true } : c)
+  sendNotice: (carId: string, playerId?: string) => set((state) => ({
+    cars: state.cars.map(c => {
+      if (c.id !== carId) return c;
+      const now = new Date().toISOString();
+      if (playerId) {
+        return {
+          ...c,
+          noticeSent: true,
+          noticeSentAt: c.noticeSentAt || now,
+          players: c.players.map(p =>
+            p.id === playerId
+              ? {
+                  ...p,
+                  arrivalStatus: p.arrivalStatus === 'arrived' || p.arrivalStatus === 'confirmed'
+                    ? p.arrivalStatus
+                    : 'reminded',
+                  arrivalRemindedAt: now
+                }
+              : p
+          )
+        };
+      }
+      return {
+        ...c,
+        noticeSent: true,
+        noticeSentAt: now,
+        players: c.players.map(p => ({
+          ...p,
+          arrivalStatus: p.arrivalStatus === 'arrived' || p.arrivalStatus === 'confirmed'
+            ? p.arrivalStatus
+            : 'reminded',
+          arrivalRemindedAt: now
+        }))
+      };
+    })
   })),
 
   confirmFinalList: (carId: string) => set((state) => ({
@@ -124,6 +163,77 @@ export const useStore = create<AppState>((set) => ({
       };
     })
   })),
+
+  setPlayerArrivalStatus: (carId: string, playerId: string, status: ArrivalStatus) => set((state) => ({
+    cars: state.cars.map(car => {
+      if (car.id !== carId) return car;
+      return {
+        ...car,
+        players: car.players.map(p =>
+          p.id === playerId
+            ? {
+                ...p,
+                arrivalStatus: status,
+                arrivedAt: status === 'arrived' ? new Date().toISOString() : p.arrivedAt
+              }
+            : p
+        )
+      };
+    })
+  })),
+
+  getScheduleConflicts: (date: string): ScheduleConflict[] => {
+    const state = useStore.getState();
+    const dayCars = state.cars.filter(c => c.date === date && c.status !== 'cancelled' && c.status !== 'finished');
+    const conflicts: ScheduleConflict[] = [];
+
+    const roomMap = new Map<string, Car[]>();
+    const dmMap = new Map<string, Car[]>();
+
+    dayCars.forEach(car => {
+      const key = `${car.startTime}`;
+      const roomKey = `${car.roomId}_${key}`;
+      const dmKey = `${car.dmId}_${key}`;
+
+      if (!roomMap.has(roomKey)) roomMap.set(roomKey, []);
+      roomMap.get(roomKey)!.push(car);
+
+      if (!dmMap.has(dmKey)) dmMap.set(dmKey, []);
+      dmMap.get(dmKey)!.push(car);
+    });
+
+    roomMap.forEach((cars, key) => {
+      if (cars.length > 1) {
+        const [roomId, startTime] = key.split('_');
+        const room = state.rooms.find(r => r.id === roomId);
+        conflicts.push({
+          type: 'room',
+          resourceId: roomId,
+          resourceName: room?.name || '未知房间',
+          date,
+          startTime,
+          carIds: cars.map(c => c.id)
+        });
+      }
+    });
+
+    dmMap.forEach((cars, key) => {
+      if (cars.length > 1) {
+        const [dmId, startTime] = key.split('_');
+        const dm = state.dms.find(d => d.id === dmId);
+        conflicts.push({
+          type: 'dm',
+          resourceId: dmId,
+          resourceName: dm?.name || '未知DM',
+          date,
+          startTime,
+          carIds: cars.map(c => c.id)
+        });
+      }
+    });
+
+    return conflicts;
+  },
 
   joinCar: (carId: string, player: Car['players'][0]) => set((state) => ({
     cars: state.cars.map(car => {

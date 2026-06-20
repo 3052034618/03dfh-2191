@@ -1,4 +1,4 @@
-import { Car, Player, CarStatus, ScriptGenderRequirement, StoreNotice } from '@/types';
+import { Car, Player, CarStatus, ScriptGenderRequirement, StoreNotice, ArrivalStatus } from '@/types';
 import dayjs from 'dayjs';
 
 export const formatDate = (date: string): string => {
@@ -44,6 +44,26 @@ export const getStatusColor = (status: CarStatus): string => {
     cancelled: '#C9CDD4'
   };
   return map[status];
+};
+
+export const getArrivalStatusText = (status?: ArrivalStatus): string => {
+  const map: Record<ArrivalStatus, string> = {
+    not_reminded: '未提醒',
+    reminded: '已提醒',
+    confirmed: '已确认到店',
+    arrived: '已到店'
+  };
+  return status ? map[status] : '未提醒';
+};
+
+export const getArrivalStatusColor = (status?: ArrivalStatus): string => {
+  const map: Record<ArrivalStatus, string> = {
+    not_reminded: '#86909C',
+    reminded: '#FF7D54',
+    confirmed: '#00B42A',
+    arrived: '#7B4BFF'
+  };
+  return status ? map[status] : '#86909C';
 };
 
 export const getConfirmedCount = (car: Car): number => {
@@ -95,6 +115,26 @@ export const calcDepositTotal = (car: Car): number => {
   return getConfirmedCount(car) * car.depositAmount;
 };
 
+export interface DepositLedger {
+  totalPlayers: number;
+  totalReceivable: number;
+  totalReceived: number;
+  totalPending: number;
+  paidPlayers: Player[];
+  unpaidPlayers: Player[];
+}
+
+export const getDepositLedger = (car: Car): DepositLedger => {
+  const confirmed = car.players.filter(p => p.confirmed);
+  const paidPlayers = confirmed.filter(p => p.depositPaid);
+  const unpaidPlayers = confirmed.filter(p => !p.depositPaid);
+  const totalPlayers = confirmed.length;
+  const totalReceivable = totalPlayers * car.depositAmount;
+  const totalReceived = paidPlayers.length * car.depositAmount;
+  const totalPending = unpaidPlayers.length * car.depositAmount;
+  return { totalPlayers, totalReceivable, totalReceived, totalPending, paidPlayers, unpaidPlayers };
+};
+
 export const getDepositCount = (car: Car): { paid: number; total: number; unpaid: Player[] } => {
   const confirmed = car.players.filter(p => p.confirmed);
   const paid = confirmed.filter(p => p.depositPaid).length;
@@ -102,27 +142,104 @@ export const getDepositCount = (car: Car): { paid: number; total: number; unpaid
   return { paid, total: confirmed.length, unpaid };
 };
 
+export interface ArrivalProgress {
+  notReminded: Player[];
+  reminded: Player[];
+  confirmed: Player[];
+  arrived: Player[];
+  total: number;
+}
+
+export const getArrivalProgress = (car: Car): ArrivalProgress => {
+  const confirmed = car.players.filter(p => p.confirmed);
+  const notReminded = confirmed.filter(p => !p.arrivalStatus || p.arrivalStatus === 'not_reminded');
+  const reminded = confirmed.filter(p => p.arrivalStatus === 'reminded');
+  const confirmedList = confirmed.filter(p => p.arrivalStatus === 'confirmed');
+  const arrived = confirmed.filter(p => p.arrivalStatus === 'arrived');
+  return { notReminded, reminded, confirmed: confirmedList, arrived, total: confirmed.length };
+};
+
+export const formatArrivalTime = (date: string, startTime: string): string => {
+  const hour = parseInt(startTime.split(':')[0], 10);
+  const minute = parseInt(startTime.split(':')[1], 10);
+  const arriveMinute = Math.max(0, minute - 15);
+  const arriveHour = arriveMinute === minute - 15 ? hour : hour - 1;
+  const displayMin = arriveMinute < 10 ? `0${arriveMinute}` : `${arriveMinute}`;
+  return `${formatDate(date)} ${arriveHour}:${displayMin}（开场前15分钟）`;
+};
+
+export type InvitationAudience = 'all' | 'paid' | 'unpaid';
+
 export const generateInvitationText = (
   car: Car,
   notice: StoreNotice,
-  isLocked: boolean
+  isLocked: boolean,
+  audience: InvitationAudience = 'all',
+  playerId?: string
 ): string => {
   const confirmedPlayers = car.players.filter(p => p.confirmed);
-  const { paid, total } = getDepositCount(car);
+  const { paid, total, unpaid } = getDepositCount(car);
+  const ledger = getDepositLedger(car);
 
   if (isLocked) {
     const playerList = confirmedPlayers
       .map((p, i) => `${i + 1}. ${p.name}（${p.gender === 'male' ? '男' : p.gender === 'female' ? '女' : '不限'}）${p.depositPaid ? '✓已付定金' : '⏳待付定金'}`)
       .join('\n');
 
-    return `【${car.scriptName}】🔒 车局已锁定！
+    if (audience === 'unpaid' || (playerId && unpaid.some(p => p.id === playerId))) {
+      const target = playerId ? car.players.find(p => p.id === playerId) : null;
+      const greeting = target ? `${target.name}，` : '';
+      return `💴 ${greeting}定金提醒
+【${car.scriptName}】${car.id.slice(-4).toUpperCase()}号车局
 ━━━━━━━━━━━━━━
 📅 时间：${formatDate(car.date)} ${car.startTime.slice(0, 5)} - ${car.endTime.slice(0, 5)}
 🏠 房间：${car.roomName}
 🎙️ DM：${car.dmName}
 🚗 车头：${car.captainName}
+💰 待付定金：¥${car.depositAmount}/人
+� 车局定金进度：${paid}/${total} 人已付
+━━━━━━━━━━━━━━
+📋 最终名单（${confirmedPlayers.length}人）：
+${playerList}
+━━━━━━━━━━━━━━
+⚠️ 定金规则：
+${notice.depositRule}
+━━━━━━━━━━━━━━
+请尽快支付定金锁定席位，24小时内未付视为自动放弃哦~`;
+    }
+
+    if (audience === 'paid' || (playerId && ledger.paidPlayers.some(p => p.id === playerId))) {
+      const target = playerId ? car.players.find(p => p.id === playerId) : null;
+      const greeting = target ? `${target.name}，` : '';
+      return `🎮 ${greeting}到店提醒
+【${car.scriptName}】${car.id.slice(-4).toUpperCase()}号车局 ✅ 已锁定
+━━━━━━━━━━━━━━
+⏰ 到店时间：${formatArrivalTime(car.date, car.startTime)}
+🎬 开场时间：${formatDate(car.date)} ${car.startTime.slice(0, 5)}
+🏠 房间：${car.roomName}
+🎙️ DM：${car.dmName}
+🚗 车头：${car.captainName}
+💰 定金：已付 ¥${car.depositAmount}
+━━━━━━━━━━━━━━
+📋 最终名单：
+${playerList}
+━━━━━━━━━━━━━━
+📌 到店须知：
+${notice.arrivalNotice}
+${notice.lateRule}
+━━━━━━━━━━━━━━
+有任何问题随时联系车头或店员，期待和大家一起玩本！🎉`;
+    }
+
+    return `【${car.scriptName}】�🔒 车局已锁定！
+━━━━━━━━━━━━━━
+📅 时间：${formatDate(car.date)} ${car.startTime.slice(0, 5)} - ${car.endTime.slice(0, 5)}
+⏰ 到店时间：${formatArrivalTime(car.date, car.startTime)}
+🏠 房间：${car.roomName}
+🎙️ DM：${car.dmName}
+🚗 车头：${car.captainName}
 👥 人数：${total}/${car.minPlayers}人（已锁定）
-💰 定金：¥${car.depositAmount}/人 · 已付 ${paid}/${total} 人
+💰 定金：¥${car.depositAmount}/人 · 已付 ${paid}/${total} 人（共¥${ledger.totalReceived}/¥${ledger.totalReceivable}）
 ━━━━━━━━━━━━━━
 📋 最终名单：
 ${playerList}

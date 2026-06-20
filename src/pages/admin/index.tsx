@@ -43,7 +43,8 @@ const AdminPage: React.FC = () => {
     sendNotice,
     updateScript,
     toggleSlot,
-    updateDM
+    updateDM,
+    getScheduleConflicts
   } = useStore();
 
   const almostFullCount = useMemo(
@@ -412,10 +413,45 @@ const AdminPage: React.FC = () => {
                 <Text className={styles.dateWeekday}>{d.weekday}</Text>
               </View>
             ))}
+            </View>
           </View>
-        </View>
 
-        <View className={styles.calendarGrid}>
+          {(() => {
+            const conflicts = getScheduleConflicts(selectedDate);
+            if (conflicts.length === 0) return null;
+            return (
+              <View className={styles.conflictAlert}>
+                <Text className={styles.conflictAlertTitle}>⚠️ 检测到 {conflicts.length} 处排班冲突</Text>
+                {conflicts.map((cf, idx) => {
+                  const conflictCars = cars.filter(c => cf.carIds.includes(c.id));
+                  return (
+                    <View key={idx} className={styles.conflictItem}>
+                      <Text className={styles.conflictText}>
+                        {cf.startTime.slice(0, 5)} · {cf.type === 'room' ? '🏠房间' : '🎙️DM'}「{cf.resourceName}」被 {conflictCars.length} 个车局占用：
+                        {conflictCars.map(c => c.scriptName).join(' / ')}
+                      </Text>
+                      <View
+                        className={styles.conflictAction}
+                        onClick={() => {
+                          const items = conflictCars.map(c => `${c.scriptName}（${c.captainName}）`);
+                          Taro.showActionSheet({
+                            itemList: items,
+                            success: (r) => {
+                              Taro.navigateTo({ url: `/pages/car-detail/index?id=${conflictCars[r.tapIndex].id}` });
+                            }
+                          });
+                        }}
+                      >
+                        查看处理 →
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            );
+          })()}
+
+          <View className={styles.calendarGrid}>
             {rooms.map(room => {
               const slotsForDate = room.availableSlots.filter(s => s.date === selectedDate);
               return (
@@ -430,24 +466,43 @@ const AdminPage: React.FC = () => {
                       <View className={styles.calendarNoSlots}>暂无排期</View>
                     ) : (
                       slotsForDate.map(slot => {
-                        const carForSlot = cars.find(c =>
+                        const carsForSlot = cars.filter(c =>
                           c.roomId === room.id &&
                           c.date === selectedDate &&
-                          c.startTime === slot.startTime
+                          c.startTime === slot.startTime &&
+                          c.status !== 'cancelled' && c.status !== 'finished'
                         );
+                        const carForSlot = carsForSlot[0];
                         const isLocked = carForSlot?.finalConfirmed;
+                        const hasConflict = carsForSlot.length > 1;
+                        const dmConflict = hasConflict || (carForSlot && cars.some(c =>
+                          c.id !== carForSlot.id &&
+                          c.date === selectedDate &&
+                          c.startTime === slot.startTime &&
+                          c.dmId === carForSlot.dmId &&
+                          c.status !== 'cancelled' && c.status !== 'finished'
+                        ));
 
                         return (
                           <View
                             key={slot.id}
                             className={classnames(
                               styles.calendarSlot,
-                              !slot.available && styles.calendarSlotBooked,
+                              !slot.available && !carForSlot && styles.calendarSlotBooked,
                               carForSlot && styles.calendarSlotHasCar,
-                              isLocked && styles.calendarSlotLocked
+                              isLocked && styles.calendarSlotLocked,
+                              hasConflict && styles.calendarSlotConflict
                             )}
                             onClick={() => {
-                              if (carForSlot) {
+                              if (hasConflict) {
+                                const items = carsForSlot.map(c => `${c.scriptName}（${c.captainName}）`);
+                                Taro.showActionSheet({
+                                  itemList: items,
+                                  success: (r) => {
+                                    Taro.navigateTo({ url: `/pages/car-detail/index?id=${carsForSlot[r.tapIndex].id}` });
+                                  }
+                                });
+                              } else if (carForSlot) {
                                 Taro.navigateTo({ url: `/pages/car-detail/index?id=${carForSlot.id}` });
                               } else if (slot.available) {
                                 handleToggleSlot(room.id, slot.id);
@@ -455,6 +510,9 @@ const AdminPage: React.FC = () => {
                             }}
                           >
                             <Text className={styles.calendarSlotTime}>{slot.startTime.slice(0, 5)}</Text>
+                            {hasConflict && (
+                              <View className={styles.conflictBadge}>⚠️ 冲突{carsForSlot.length}车</View>
+                            )}
                             {!slot.available && !carForSlot && (
                               <Text className={styles.calendarSlotStatus}>已关闭</Text>
                             )}
@@ -462,7 +520,7 @@ const AdminPage: React.FC = () => {
                               <View className={styles.calendarSlotContent}>
                                 <Text className={styles.calendarSlotScript}>{carForSlot.scriptName}</Text>
                                 <Text className={styles.calendarSlotMeta}>
-                                  DM {carForSlot.dmName} · {carForSlot.captainName}
+                                  DM {carForSlot.dmName}{dmConflict && !hasConflict ? ' ⚠️冲突' : ''} · {carForSlot.captainName}
                                 </Text>
                                 <View className={styles.calendarSlotBadge}>
                                   {isLocked ? '🔒 已锁定' : getStatusText(carForSlot.status, carForSlot.finalConfirmed)}
@@ -499,11 +557,15 @@ const AdminPage: React.FC = () => {
               <View className={classnames(styles.legendDot, styles.legendDotLocked)} />
               <Text className={styles.legendText}>已锁定</Text>
             </View>
+            <View className={styles.legendItem}>
+              <View className={classnames(styles.legendDot, styles.legendDotConflict)} />
+              <Text className={styles.legendText}>冲突</Text>
+            </View>
           </View>
 
           <View className={styles.scheduleTip}>
             <Text style={{ color: '#9B7DFF' }}>💡 提示：</Text>
-            点击可约时段可快速开关，点击有车局的时段可直接跳转车局详情。
+            点击可约时段可快速开关，点击有车局时段跳转详情，冲突时段会高亮并可选择处理哪个车局。
             已关闭的时段熟客发起时不会出现。
           </View>
         </View>

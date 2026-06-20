@@ -20,6 +20,8 @@ interface CarCardProps {
   onCopyInfo?: () => void;
   onSendNotice?: () => void;
   onManageDeposit?: () => void;
+  arrivalCount?: number;
+  arrivalTotal?: number;
 }
 
 const CarCard: React.FC<CarCardProps> = ({
@@ -33,7 +35,9 @@ const CarCard: React.FC<CarCardProps> = ({
   onViewList,
   onCopyInfo,
   onSendNotice,
-  onManageDeposit
+  onManageDeposit,
+  arrivalCount,
+  arrivalTotal
 }) => {
   const confirmed = getConfirmedCount(car);
   const remaining = getRemainingCount(car);
@@ -100,9 +104,16 @@ const CarCard: React.FC<CarCardProps> = ({
             <Text className={styles.highlight}>{confirmed}</Text>
             <Text>/{car.minPlayers}人成车</Text>
             {isLocked && (
-              <Text style={{ marginLeft: 12, color: '#00B42A', fontWeight: 500 }}>
-                定金 {paid}/{total}
-              </Text>
+              <>
+                <Text style={{ marginLeft: 12, color: '#00B42A', fontWeight: 500 }}>
+                  定金 {paid}/{total}
+                </Text>
+                {typeof arrivalCount === 'number' && typeof arrivalTotal === 'number' && (
+                  <Text style={{ marginLeft: 12, color: '#7B4BFF', fontWeight: 500 }}>
+                    到店 {arrivalCount}/{arrivalTotal}
+                  </Text>
+                )}
+              </>
             )}
           </View>
         </View>

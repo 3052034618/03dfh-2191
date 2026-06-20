@@ -8,6 +8,8 @@ export type CarStatus = 'recruiting' | 'almost_full' | 'confirmed' | 'playing' |
 
 export type UserRole = 'customer' | 'captain' | 'staff' | 'owner';
 
+export type ArrivalStatus = 'not_reminded' | 'reminded' | 'confirmed' | 'arrived';
+
 export interface ScriptGenderRequirement {
   male: number;
   female: number;
@@ -67,6 +69,10 @@ export interface Player {
   depositPaid?: boolean;
   depositAmount?: number;
   depositPaidAt?: string;
+  depositRemindedAt?: string;
+  arrivalStatus?: ArrivalStatus;
+  arrivalRemindedAt?: string;
+  arrivedAt?: string;
 }
 
 export interface Car {
@@ -96,6 +102,8 @@ export interface Car {
   createdAt: string;
   price: number;
   depositAmount: number;
+  depositSentAt?: string;
+  noticeSentAt?: string;
 }
 
 export interface User {
@@ -114,4 +122,13 @@ export interface StoreNotice {
   depositRule: string;
   arrivalNotice: string;
   lateRule: string;
+}
+
+export interface ScheduleConflict {
+  type: 'room' | 'dm';
+  resourceId: string;
+  resourceName: string;
+  date: string;
+  startTime: string;
+  carIds: string[];
 }
