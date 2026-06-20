@@ -25,6 +25,12 @@
   color: #00B42A;
 }
 
+.locked {
+  background: rgba(123, 75, 255, 0.2);
+  color: #9B7DFF;
+  border: 1px solid rgba(123, 75, 255, 0.35);
+}
+
 .playing {
   background: rgba(123, 75, 255, 0.15);
   color: #7B4BFF;

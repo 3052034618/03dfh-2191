@@ -167,6 +167,20 @@
   }
 }
 
+.lockedTag {
+  height: 80rpx;
+  padding: 0 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: $color-primary-bg;
+  border: 1rpx dashed rgba(123, 75, 255, 0.4);
+  border-radius: $radius-round;
+  color: $color-primary-light;
+  font-size: $font-size-sm;
+  font-weight: 500;
+}
+
 .footer {
   padding: $spacing-md $spacing-lg $spacing-lg;
   display: flex;

@@ -369,3 +369,170 @@
   font-weight: $font-weight-semibold;
   z-index: 2;
 }
+
+.previewCard {
+  background: linear-gradient(135deg, rgba(123, 75, 255, 0.12) 0%, $color-bg-card 40%);
+  border: 1px solid rgba(123, 75, 255, 0.25);
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-lg;
+}
+
+.previewHeader {
+  display: flex;
+  gap: $spacing-md;
+  margin-bottom: $spacing-lg;
+  padding-bottom: $spacing-lg;
+  border-bottom: 1px solid $color-divider;
+}
+
+.previewCover {
+  width: 180rpx;
+  height: 250rpx;
+  border-radius: $radius-md;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.previewCoverPlaceholder {
+  width: 180rpx;
+  height: 250rpx;
+  border-radius: $radius-md;
+  background: $color-bg-hover;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 80rpx;
+  flex-shrink: 0;
+}
+
+.previewHeaderInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-width: 0;
+}
+
+.previewTitle {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-sm;
+  @include text-ellipsis;
+}
+
+.previewTags {
+  display: flex;
+  gap: 8rpx;
+  margin-bottom: $spacing-sm;
+  flex-wrap: wrap;
+}
+
+.previewTag {
+  padding: 4rpx 14rpx;
+  background: $color-primary-bg;
+  color: $color-primary-light;
+  border-radius: $radius-xs;
+  font-size: $font-size-xs;
+}
+
+.previewPrice {
+  font-size: $font-size-lg;
+  color: $color-accent-light;
+  font-weight: $font-weight-bold;
+}
+
+.previewInfoList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.previewInfoItem {
+  display: flex;
+  gap: $spacing-md;
+  align-items: flex-start;
+}
+
+.previewInfoIcon {
+  width: 56rpx;
+  height: 56rpx;
+  background: $color-primary-bg;
+  border-radius: $radius-sm;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: $font-size-lg;
+  flex-shrink: 0;
+}
+
+.previewInfoContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.previewInfoLabel {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  margin-bottom: 4rpx;
+  display: block;
+}
+
+.previewInfoValue {
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  font-weight: 500;
+  @include text-ellipsis;
+}
+
+.previewInfoWarning {
+  display: block;
+  margin-top: 4rpx;
+  font-size: $font-size-xs;
+  color: $color-error;
+  font-weight: 500;
+}
+
+.validationList {
+  background: $color-bg-card;
+  border: 1px solid $color-border;
+  border-radius: $radius-lg;
+  padding: $spacing-md $spacing-lg;
+  margin-bottom: $spacing-lg;
+}
+
+.validationTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-sm;
+}
+
+.validationItem {
+  padding: 8rpx 0;
+  font-size: $font-size-sm;
+  border-bottom: 1px solid $color-divider;
+}
+
+.validationItem:last-of-type {
+  border-bottom: none;
+}
+
+.validationOk {
+  color: $color-success;
+}
+
+.validationFail {
+  color: $color-error;
+}
+
+.validationBlockTip {
+  margin-top: $spacing-sm;
+  padding: $spacing-sm $spacing-md;
+  background: rgba(245, 63, 63, 0.1);
+  border-radius: $radius-sm;
+  color: $color-error;
+  font-size: $font-size-sm;
+  font-weight: 500;
+}

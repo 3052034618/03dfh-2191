@@ -51,7 +51,7 @@ const CarCard: React.FC<CarCardProps> = ({
           <View>
             <View className={styles.topRow}>
               <Text className={styles.name}>{car.scriptName}</Text>
-              <StatusBadge status={car.status} />
+              <StatusBadge status={car.status} finalConfirmed={car.finalConfirmed} />
             </View>
             <View className={styles.metaRow}>
               <View className={styles.metaItem}>
@@ -103,13 +103,16 @@ const CarCard: React.FC<CarCardProps> = ({
         {car.players.slice(0, 8).map(p => (
           <PlayerAvatar key={p.id} player={p} />
         ))}
-        {car.players.length < 8 && car.status !== 'finished' && car.status !== 'cancelled' && (
+        {car.players.length < 8 && !car.finalConfirmed && car.status !== 'finished' && car.status !== 'cancelled' && (
           Array.from({ length: Math.min(3, 8 - car.players.length) }).map((_, i) => (
             <View key={`empty-${i}`} className={styles.emptySlot}>
               <View className={styles.slotAvatar}>+</View>
               <Text className={styles.slotText}>等你</Text>
             </View>
           ))
+        )}
+        {car.finalConfirmed && car.status !== 'finished' && car.status !== 'cancelled' && (
+          <View className={styles.lockedTag}>🔒 名单已锁定</View>
         )}
       </View>
 

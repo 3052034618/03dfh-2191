@@ -13,7 +13,7 @@ import styles from './index.module.scss';
 type Step = 1 | 2 | 3 | 4;
 
 const CreatePage: React.FC = () => {
-  const { scripts, rooms, dms, currentUser, addCar } = useStore();
+  const { scripts, rooms, dms, currentUser, addCar, preselectedScriptId, setPreselectedScriptId } = useStore();
 
   const [step, setStep] = useState<Step>(1);
   const [selectedScript, setSelectedScript] = useState<Script | null>(null);
@@ -23,18 +23,15 @@ const CreatePage: React.FC = () => {
   const [acceptStrangers, setAcceptStrangers] = useState(false);
 
   useEffect(() => {
-    const handler = (scriptId: string) => {
-      const found = scripts.find(s => s.id === scriptId);
+    if (preselectedScriptId) {
+      const found = scripts.find(s => s.id === preselectedScriptId);
       if (found) {
         setSelectedScript(found);
         setStep(2);
+        setPreselectedScriptId(null);
       }
-    };
-    Taro.eventCenter.on('preSelectScript', handler);
-    return () => {
-      Taro.eventCenter.off('preSelectScript', handler);
-    };
-  }, [scripts]);
+    }
+  }, [preselectedScriptId, scripts, setPreselectedScriptId]);
 
   const availableScripts = useMemo(() => {
     return scripts.filter(s => s.inStock);
@@ -42,14 +39,23 @@ const CreatePage: React.FC = () => {
 
   const availableRooms = useMemo(() => {
     if (!selectedScript) return rooms;
-    return rooms.filter(r => r.capacity >= selectedScript.minPlayers);
+    return rooms
+      .filter(r => r.capacity >= selectedScript.minPlayers)
+      .map(r => ({
+        ...r,
+        availableSlots: r.availableSlots.filter(s => s.available)
+      }))
+      .filter(r => r.availableSlots.length > 0);
   }, [rooms, selectedScript]);
 
   const availableDMs = useMemo(() => {
     if (!selectedScript || !selectedSlot) return [];
     return dms.filter(dm =>
       dm.scriptIds.includes(selectedScript.id) &&
-      dm.availableSlots.includes(selectedSlot.date)
+      (
+        dm.availableSlots.includes(selectedSlot.date) ||
+        dm.availableSlots.includes(selectedSlot.startTime)
+      )
     );
   }, [dms, selectedScript, selectedSlot]);
 
@@ -77,7 +83,35 @@ const CreatePage: React.FC = () => {
   const canNextStep1 = selectedScript !== null;
   const canNextStep2 = selectedRoom !== null && selectedSlot !== null;
   const canNextStep3 = selectedDM !== null;
-  const canSubmit = canNextStep1 && canNextStep2 && canNextStep3;
+
+  const validations = useMemo(() => {
+    const list: { ok: boolean; text: string }[] = [];
+    list.push({ ok: !!selectedScript, text: selectedScript ? `✓ 已选剧本「${selectedScript.name}」` : '✗ 请选择剧本' });
+    list.push({
+      ok: !!selectedRoom && !!selectedSlot,
+      text: selectedSlot
+        ? `✓ 已选${formatDate(selectedSlot.date)} ${selectedSlot.startTime} · ${selectedRoom?.name}`
+        : '✗ 请选择房间和时段'
+    });
+    list.push({
+      ok: !!selectedDM && selectedScript ? selectedDM.scriptIds.includes(selectedScript.id) : false,
+      text: selectedDM
+        ? (selectedScript && selectedDM.scriptIds.includes(selectedScript.id)
+          ? `✓ DM ${selectedDM.name} 可带本`
+          : `✗ DM ${selectedDM.name} 不带该剧本，请更换`)
+        : '✗ 请选择DM'
+    });
+    if (selectedSlot) {
+      const realSlot = selectedRoom?.availableSlots.find(s => s.id === selectedSlot.id);
+      list.push({
+        ok: !!realSlot?.available,
+        text: realSlot?.available ? '✓ 房间时段仍可用' : '✗ 该时段已被占用，请重新选择'
+      });
+    }
+    return list;
+  }, [selectedScript, selectedRoom, selectedSlot, selectedDM]);
+
+  const canSubmit = validations.every(v => v.ok);
 
   const totalEstimate = selectedScript ? selectedScript.price * selectedScript.minPlayers : 0;
   const depositEstimate = selectedScript ? 50 * selectedScript.minPlayers : 0;
@@ -281,49 +315,97 @@ const CreatePage: React.FC = () => {
 
         {step === 4 && (
           <View className={styles.section}>
-            <Text className={styles.sectionTitle}>✅ 第四步：确认并发起</Text>
+            <Text className={styles.sectionTitle}>✅ 第四步：完整成车预览</Text>
 
-            <View className={styles.selectedPreview} style={{ borderColor: 'rgba(0,180,42,0.3)' }}>
-              <View className={styles.previewRow}>
-                <Text className={styles.previewLabel}>剧本</Text>
-                <Text className={styles.previewValue}>
-                  「{selectedScript?.name}」{selectedScript?.type}
-                </Text>
+            <View className={styles.previewCard}>
+              <View className={styles.previewHeader}>
+                {selectedScript?.cover ? (
+                  <Image className={styles.previewCover} src={selectedScript.cover} mode="aspectFill" />
+                ) : (
+                  <View className={styles.previewCoverPlaceholder}>📖</View>
+                )}
+                <View className={styles.previewHeaderInfo}>
+                  <Text className={styles.previewTitle}>{selectedScript?.name || '请先选择剧本'}</Text>
+                  <View className={styles.previewTags}>
+                    {selectedScript && (
+                      <>
+                        <View className={styles.previewTag}>{selectedScript.type}</View>
+                        <View className={styles.previewTag}>
+                          {selectedScript.minPlayers}-{selectedScript.maxPlayers}人
+                        </View>
+                      </>
+                    )}
+                  </View>
+                  <Text className={styles.previewPrice}>¥{selectedScript?.price || '--'}/人</Text>
+                </View>
               </View>
-              <View className={styles.previewRow}>
-                <Text className={styles.previewLabel}>时间</Text>
-                <Text className={styles.previewValue}>
-                  {selectedSlot && formatDate(selectedSlot.date)} {selectedSlot?.startTime} - {selectedSlot?.endTime}
-                </Text>
-              </View>
-              <View className={styles.previewRow}>
-                <Text className={styles.previewLabel}>房间</Text>
-                <Text className={styles.previewValue}>{selectedRoom?.name} · {selectedRoom?.theme}</Text>
-              </View>
-              <View className={styles.previewRow}>
-                <Text className={styles.previewLabel}>DM</Text>
-                <Text className={styles.previewValue}>{selectedDM?.name} ⭐ {selectedDM?.rating}</Text>
-              </View>
-              <View className={styles.previewRow}>
-                <Text className={styles.previewLabel}>车头</Text>
-                <Text className={styles.previewValue} style={{ color: '#FF7D54' }}>
-                  {currentUser.name}（你）
-                </Text>
-              </View>
-              <View className={styles.previewRow}>
-                <Text className={styles.previewLabel}>费用</Text>
-                <Text className={styles.previewValue} style={{ color: '#FF7D54', fontWeight: 600 }}>
-                  ¥{selectedScript?.price}/人
-                </Text>
+
+              <View className={styles.previewInfoList}>
+                <View className={styles.previewInfoItem}>
+                  <View className={styles.previewInfoIcon}>📅</View>
+                  <View className={styles.previewInfoContent}>
+                    <Text className={styles.previewInfoLabel}>场次</Text>
+                    <Text className={styles.previewInfoValue}>
+                      {selectedSlot
+                        ? `${formatDate(selectedSlot.date)} ${selectedSlot.startTime} - ${selectedSlot.endTime}`
+                        : '待选择'}
+                    </Text>
+                  </View>
+                </View>
+
+                <View className={styles.previewInfoItem}>
+                  <View className={styles.previewInfoIcon}>🏠</View>
+                  <View className={styles.previewInfoContent}>
+                    <Text className={styles.previewInfoLabel}>房间</Text>
+                    <Text className={styles.previewInfoValue}>
+                      {selectedRoom
+                        ? `${selectedRoom.name} · ${selectedRoom.theme}主题（${selectedRoom.capacity}人）`
+                        : '待选择'}
+                    </Text>
+                  </View>
+                </View>
+
+                <View className={styles.previewInfoItem}>
+                  <View className={styles.previewInfoIcon}>🎙️</View>
+                  <View className={styles.previewInfoContent}>
+                    <Text className={styles.previewInfoLabel}>DM主持人</Text>
+                    <Text className={styles.previewInfoValue}>
+                      {selectedDM
+                        ? `DM ${selectedDM.name} ⭐ ${selectedDM.rating}`
+                        : '待选择'}
+                    </Text>
+                    {selectedDM && selectedScript && !selectedDM.scriptIds.includes(selectedScript.id) && (
+                      <Text className={styles.previewInfoWarning}>⚠️ 该DM不带此剧本</Text>
+                    )}
+                  </View>
+                </View>
+
+                <View className={styles.previewInfoItem}>
+                  <View className={styles.previewInfoIcon}>🚗</View>
+                  <View className={styles.previewInfoContent}>
+                    <Text className={styles.previewInfoLabel}>车头</Text>
+                    <Text className={styles.previewInfoValue}>{currentUser.name}（你）</Text>
+                  </View>
+                </View>
+
+                <View className={styles.previewInfoItem}>
+                  <View className={styles.previewInfoIcon}>💰</View>
+                  <View className={styles.previewInfoContent}>
+                    <Text className={styles.previewInfoLabel}>费用预估</Text>
+                    <Text className={styles.previewInfoValue} style={{ color: '#FF7D54', fontWeight: 600 }}>
+                      ¥{totalEstimate} / 车局 · 定金 ¥{depositEstimate}（成车后收取）
+                    </Text>
+                  </View>
+                </View>
               </View>
             </View>
 
             <View className={styles.smartTip}>
-              <View className={styles.tipTitle}>💡 系统智能提示</View>
+              <View className={styles.tipTitle}>💡 智能提示</View>
               <View className={styles.tipContent}>
-                当前已确认 <Text className={styles.tipHighlight}>1</Text> 人，
+                当前已确认 <Text className={styles.tipHighlight}>1</Text> 人（车头），
                 {selectedScript && remainingCount > 0 && (
-                  <>还差 <Text className={styles.tipHighlight}>{remainingCount}</Text> 人即可成车。</>
+                  <>还差 <Text className={styles.tipHighlight}>{remainingCount}</Text> 人可成车。</>
                 )}
                 {selectedScript && remainingCount === 0 && (
                   <>已达成最低开车人数！</>
@@ -332,6 +414,26 @@ const CreatePage: React.FC = () => {
                   <View style={{ marginTop: 12 }}>{genderTip}</View>
                 )}
               </View>
+            </View>
+
+            <View className={styles.validationList}>
+              <View className={styles.validationTitle}>📋 发起前校验</View>
+              {validations.map((v, i) => (
+                <View
+                  key={i}
+                  className={classnames(
+                    styles.validationItem,
+                    v.ok ? styles.validationOk : styles.validationFail
+                  )}
+                >
+                  {v.text}
+                </View>
+              ))}
+              {!canSubmit && (
+                <View className={styles.validationBlockTip}>
+                  ⛔ 以上校验项未全部通过，请返回修改后再提交
+                </View>
+              )}
             </View>
 
             <View className={styles.settings}>
@@ -347,7 +449,7 @@ const CreatePage: React.FC = () => {
               </View>
             </View>
 
-            <View className={styles.smartTip} style={{ background: 'rgba(123,75,255,0.1)', borderColor: 'rgba(123,75,255,0.3)', marginTop: 24 }}>
+            <View className={styles.smartTip} style={{ background: 'rgba(123,75,255,0.1)', borderColor: 'rgba(123,75,255,0.3)' }}>
               <View className={styles.tipTitle} style={{ color: '#9B7DFF' }}>🔒 私密车说明</View>
               <View className={styles.tipContent}>
                 此为熟客私密车，只有你邀请的好友能看到完整车局信息。

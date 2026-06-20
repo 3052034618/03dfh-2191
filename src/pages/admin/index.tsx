@@ -6,7 +6,7 @@ import { formatDate, getConfirmedCount, getRemainingCount, getStatusText, getSta
 import classnames from 'classnames';
 import styles from './index.module.scss';
 
-type AdminTab = 'scripts' | 'rooms' | 'dms' | 'cars';
+type AdminTab = 'scripts' | 'rooms' | 'dms' | 'schedule' | 'cars';
 type CarFilter = 'all' | 'almost' | 'needNotice' | 'confirmed';
 
 const AdminPage: React.FC = () => {
@@ -127,6 +127,12 @@ const AdminPage: React.FC = () => {
           onClick={() => setActiveTab('dms')}
         >
           DM排班
+        </View>
+        <View
+          className={classnames(styles.tabItem, activeTab === 'schedule' && styles.tabItemActive)}
+          onClick={() => setActiveTab('schedule')}
+        >
+          排班总览
         </View>
         <View
           className={classnames(styles.tabItem, activeTab === 'cars' && styles.tabItemActive)}
@@ -370,6 +376,88 @@ const AdminPage: React.FC = () => {
         </View>
       )}
 
+      {activeTab === 'schedule' && (
+        <View className={styles.section}>
+          <View className={styles.sectionHeader}>
+            <Text className={styles.sectionTitle}>🗓️ 排班总览（剧本 × 房间 × DM × 时段）</Text>
+          </View>
+          <View className={styles.scheduleTip}>
+            <Text style={{ color: '#9B7DFF' }}>💡 提示：</Text>
+            点击时段可开关房间可用性。若时段标红或房间/DM 标灰，则该组合会被系统自动排除，熟客发起车局时不会看到冲突选项。
+          </View>
+
+          {rooms.map(room => (
+            <View key={room.id} className={styles.scheduleRow}>
+              <View className={styles.scheduleRoomHeader}>
+                <Text className={styles.scheduleRoomName}>{room.name}</Text>
+                <Text className={styles.scheduleRoomMeta}>{room.theme}主题 · {room.capacity}人</Text>
+              </View>
+
+              {scripts.filter(s => s.inStock && room.capacity >= s.minPlayers).map(script => (
+                <View key={script.id} className={styles.scheduleScriptRow}>
+                  <View className={styles.scheduleScriptCell}>
+                    <Text className={styles.scheduleScriptName}>{script.name}</Text>
+                    <Text className={styles.scheduleScriptMeta}>
+                      {script.type} · {script.minPlayers}-{script.maxPlayers}人
+                    </Text>
+                  </View>
+                  <View className={styles.scheduleDmRow}>
+                    {dms.map(dm => {
+                      const canBring = dm.scriptIds.includes(script.id);
+                      return (
+                        <View
+                          key={dm.id}
+                          className={classnames(
+                            styles.scheduleDmCell,
+                            !canBring && styles.scheduleDmCellDisabled
+                          )}
+                        >
+                          <Image
+                            className={styles.scheduleDmAvatar}
+                            src={dm.avatar}
+                            mode="aspectFill"
+                          />
+                          <View className={styles.scheduleDmInfo}>
+                            <Text className={styles.scheduleDmName}>
+                              {canBring ? `DM ${dm.name}` : `DM ${dm.name}（不带本）`}
+                            </Text>
+                            <View className={styles.scheduleSlotRow}>
+                              {room.availableSlots.map(slot => {
+                                const dmFree = dm.availableSlots.includes(slot.startTime) || dm.availableSlots.includes(slot.date);
+                                const clickable = canBring && dmFree;
+                                return (
+                                  <View
+                                    key={slot.id}
+                                    className={classnames(
+                                      styles.scheduleSlot,
+                                      !slot.available && styles.scheduleSlotBooked,
+                                      !clickable && slot.available && styles.scheduleSlotConflict
+                                    )}
+                                    onClick={() => canBring && handleToggleSlot(room.id, slot.id)}
+                                  >
+                                    {slot.startTime.slice(0, 5)}
+                                  </View>
+                                );
+                              })}
+                            </View>
+                          </View>
+                        </View>
+                      );
+                    })}
+                  </View>
+                </View>
+              ))}
+
+              {scripts.filter(s => s.inStock && room.capacity >= s.minPlayers).length === 0 && (
+                <View className={styles.scheduleEmpty}>
+                  暂无符合该房间容量的剧本
+                </View>
+              )}
+            </View>
+          ))}
+        </View>
+      )}
+
       {activeTab === 'cars' && (
         <View className={styles.section}>
           <View className={styles.sectionHeader}>
@@ -435,7 +523,7 @@ const AdminPage: React.FC = () => {
                       fontWeight: 500,
                       flexShrink: 0
                     }}>
-                      {getStatusText(car.status)}
+                      {getStatusText(car.status, car.finalConfirmed)}
                     </View>
                   </View>
 

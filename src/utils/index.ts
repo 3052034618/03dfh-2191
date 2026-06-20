@@ -21,7 +21,8 @@ export const formatDifficulty = (level: number): string => {
   return '★'.repeat(level) + '☆'.repeat(5 - level);
 };
 
-export const getStatusText = (status: CarStatus): string => {
+export const getStatusText = (status: CarStatus, finalConfirmed?: boolean): string => {
+  if (finalConfirmed && status === 'confirmed') return '已锁定';
   const map: Record<CarStatus, string> = {
     recruiting: '招募中',
     almost_full: '即将满车',

@@ -15,7 +15,7 @@ const STATUS_OPTIONS: { label: string; value: StatusFilter }[] = [
   { label: '全部', value: 'all' },
   { label: '招募中', value: 'recruiting' },
   { label: '即将满车', value: 'almost_full' },
-  { label: '已成车', value: 'confirmed' },
+  { label: '已成车/已锁定', value: 'confirmed' },
   { label: '进行中', value: 'playing' },
   { label: '已结束', value: 'finished' }
 ];

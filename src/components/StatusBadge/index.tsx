@@ -8,21 +8,24 @@ import styles from './index.module.scss';
 interface StatusBadgeProps {
   status: CarStatus;
   className?: string;
+  finalConfirmed?: boolean;
 }
 
-const StatusBadge: React.FC<StatusBadgeProps> = ({ status, className }) => {
+const StatusBadge: React.FC<StatusBadgeProps> = ({ status, className, finalConfirmed }) => {
+  const isLocked = finalConfirmed && status === 'confirmed';
   const cls = classnames(
     styles.badge,
-    status === 'recruiting' && styles.recruiting,
-    status === 'almost_full' && styles.almostFull,
-    status === 'confirmed' && styles.confirmed,
-    status === 'playing' && styles.playing,
-    status === 'finished' && styles.finished,
-    status === 'cancelled' && styles.cancelled,
+    isLocked && styles.locked,
+    !isLocked && status === 'recruiting' && styles.recruiting,
+    !isLocked && status === 'almost_full' && styles.almostFull,
+    !isLocked && status === 'confirmed' && styles.confirmed,
+    !isLocked && status === 'playing' && styles.playing,
+    !isLocked && status === 'finished' && styles.finished,
+    !isLocked && status === 'cancelled' && styles.cancelled,
     className
   );
 
-  return <View className={cls}>{getStatusText(status)}</View>;
+  return <View className={cls}>{getStatusText(status, finalConfirmed)}</View>;
 };
 
 export default StatusBadge;

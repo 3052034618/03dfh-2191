@@ -13,7 +13,9 @@ interface AppState {
   dms: DM[];
   cars: Car[];
   storeNotice: StoreNotice;
+  preselectedScriptId: string | null;
   setCurrentUser: (user: User) => void;
+  setPreselectedScriptId: (id: string | null) => void;
   addCar: (car: Car) => void;
   updateCar: (carId: string, data: Partial<Car>) => void;
   updatePlayer: (carId: string, playerId: string, data: Partial<Car['players'][0]>) => void;
@@ -47,8 +49,10 @@ export const useStore = create<AppState>((set) => ({
   dms: mockDMs,
   cars: mockCars,
   storeNotice: defaultNotice,
+  preselectedScriptId: null,
 
   setCurrentUser: (user: User) => set({ currentUser: user }),
+  setPreselectedScriptId: (id: string | null) => set({ preselectedScriptId: id }),
 
   addCar: (car: Car) => set((state) => ({
     cars: [car, ...state.cars]

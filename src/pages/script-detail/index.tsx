@@ -8,7 +8,7 @@ import styles from './index.module.scss';
 const ScriptDetailPage: React.FC = () => {
   const router = useRouter();
   const id = router.params.id;
-  const { scripts, dms } = useStore();
+  const { scripts, dms, setPreselectedScriptId } = useStore();
 
   const script = useMemo(() => scripts.find(s => s.id === id), [scripts, id]);
   const availableDMs = useMemo(() => {
@@ -25,7 +25,7 @@ const ScriptDetailPage: React.FC = () => {
   }
 
   const goCreate = () => {
-    Taro.eventCenter.trigger('preSelectScript', script.id);
+    setPreselectedScriptId(script.id);
     Taro.switchTab({ url: '/pages/create/index' });
   };
 

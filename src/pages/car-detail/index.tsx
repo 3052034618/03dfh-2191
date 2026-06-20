@@ -3,7 +3,7 @@ import { View, Text, Image, ScrollView } from '@tarojs/components';
 import Taro, { useRouter } from '@tarojs/taro';
 import { useStore } from '@/store/useStore';
 import StatusBadge from '@/components/StatusBadge';
-import { formatDate, getConfirmedCount, getRemainingCount, getGenderCount, calcDepositTotal } from '@/utils';
+import { formatDate, getConfirmedCount, getRemainingCount, getGenderCount, calcDepositTotal, getStatusText } from '@/utils';
 import classnames from 'classnames';
 import styles from './index.module.scss';
 
@@ -67,13 +67,41 @@ const CarDetailPage: React.FC = () => {
     Taro.showToast({ title: '邀请链接已复制', icon: 'success' });
   };
 
+  const handleCopyInfo = () => {
+    const confirmedPlayers = car.players.filter(p => p.confirmed);
+    const text = `【${car.scriptName}】车局锁定名单
+时间：${formatDate(car.date)} ${car.startTime}-${car.endTime}
+房间：${car.roomName}
+DM：${car.dmName}
+车头：${car.captainName}
+人数：${confirmedPlayers.length}/${car.minPlayers}（已锁定）
+玩家：${confirmedPlayers.map(p => p.name).join('、')}
+请到店提前15分钟签到，定金已锁定不退~`;
+    Taro.setClipboardData({
+      data: text,
+      success: () => Taro.showToast({ title: '邀请信息已复制', icon: 'success' })
+    });
+  };
+
+  const handleViewFinalList = () => {
+    const confirmed = car.players.filter(p => p.confirmed);
+    Taro.showModal({
+      title: '🔒 已锁定最终名单',
+      content: `共 ${confirmed.length} 人确认：\n${confirmed.map((p, i) => `${i + 1}. ${p.name}${p.role === '车头' ? '（车头）' : ''}`).join('\n')}`,
+      showCancel: false,
+      confirmColor: '#7B4BFF'
+    });
+  };
+
+  const displayStatusText = getStatusText(car.status, car.finalConfirmed);
+
   return (
     <ScrollView className={styles.page} scrollY>
       <View className={styles.header}>
         <View className={styles.statusBar}>
           <View>
-            <StatusBadge status={car.status} />
-            <Text className={styles.carId}> 车局编号 #{car.id.slice(-6).toUpperCase()}</Text>
+            <StatusBadge status={car.status} finalConfirmed={car.finalConfirmed} />
+            <Text className={styles.carId}> 车局编号 #{car.id.slice(-6).toUpperCase()} · {displayStatusText}</Text>
           </View>
         </View>
 
@@ -262,19 +290,45 @@ const CarDetailPage: React.FC = () => {
               邀请好友
             </View>
           )}
+          {car.finalConfirmed && car.status !== 'finished' && car.status !== 'cancelled' && (
+            <>
+              <View
+                className={classnames(styles.btn, styles.btnOutline)}
+                onClick={handleViewFinalList}
+              >
+                📋 查看锁定名单
+              </View>
+              <View
+                className={classnames(styles.btn, styles.btnOutline)}
+                onClick={handleCopyInfo}
+              >
+                📤 复制邀请信息
+              </View>
+              {canManage && !car.noticeSent && (
+                <View className={classnames(styles.btn, styles.btnAccent, styles.btnFull)} onClick={handleSendNotice}>
+                  📢 发送到店提醒
+                </View>
+              )}
+              {canManage && car.noticeSent && (
+                <View className={classnames(styles.btn, styles.btnPrimary, styles.btnFull)}>
+                  🔒 {displayStatusText} · 等待开本
+                </View>
+              )}
+            </>
+          )}
           {canConfirmFinal && (
             <View className={classnames(styles.btn, styles.btnAccent, styles.btnFull)} onClick={handleConfirmList}>
               ✅ 确认最终名单（{confirmed}/{car.minPlayers}人已达标）
             </View>
           )}
-          {car.finalConfirmed && (
+          {!car.finalConfirmed && !canConfirmFinal && car.status !== 'finished' && car.status !== 'cancelled' && (
             <View className={classnames(styles.btn, styles.btnPrimary, styles.btnFull)}>
-              {car.status === 'finished' ? '查看复盘' : '🔒 车局已锁定 ✓'}
+              查看/修改信息
             </View>
           )}
-          {!canConfirmFinal && !car.finalConfirmed && (
+          {car.status === 'finished' && (
             <View className={classnames(styles.btn, styles.btnPrimary, styles.btnFull)}>
-              {car.status === 'finished' ? '查看复盘' : '查看/修改信息'}
+              查看复盘
             </View>
           )}
         </View>
