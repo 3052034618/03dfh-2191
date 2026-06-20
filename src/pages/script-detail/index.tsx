@@ -25,8 +25,8 @@ const ScriptDetailPage: React.FC = () => {
   }
 
   const goCreate = () => {
-    Taro.showToast({ title: '将自动带入剧本信息', icon: 'none' });
-    setTimeout(() => Taro.switchTab({ url: '/pages/create/index' }), 800);
+    Taro.eventCenter.trigger('preSelectScript', script.id);
+    Taro.switchTab({ url: '/pages/create/index' });
   };
 
   return (

@@ -26,6 +26,7 @@ const CarDetailPage: React.FC = () => {
   const isCaptain = car.captainId === currentUser.id;
   const isStaff = currentUser.role === 'staff' || currentUser.role === 'owner';
   const canManage = isCaptain || isStaff;
+  const canConfirmFinal = isCaptain && !car.finalConfirmed && confirmed >= car.minPlayers && car.status !== 'finished' && car.status !== 'cancelled';
   const { male, female } = getGenderCount(car.players);
   const depositTotal = calcDepositTotal(car);
 
@@ -51,12 +52,12 @@ const CarDetailPage: React.FC = () => {
   const handleConfirmList = () => {
     Taro.showModal({
       title: '确认最终名单',
-      content: `共 ${confirmed} 人确认参加，确认后车局状态将锁定为"已成车"，是否继续？`,
+      content: `已确认 ${confirmed} 人，达到最低开车人数（${car.minPlayers}人），确认后车局状态将锁定为"已成车"，是否继续？`,
       confirmColor: '#7B4BFF',
       success: (res) => {
         if (res.confirm) {
           confirmFinalList(car.id);
-          Taro.showToast({ title: '名单已确认', icon: 'success' });
+          Taro.showToast({ title: '名单已确认，车局已锁定', icon: 'success' });
         }
       }
     });
@@ -121,9 +122,8 @@ const CarDetailPage: React.FC = () => {
             <Text className={styles.tipText}>
               {remaining > 0
                 ? `当前还差 ${remaining} 人即可达最低开车人数，${car.acceptStrangers ? '已开启熟客补位，店员会协助匹配。' : '当前为纯熟人车，请尽快邀请好友确认。'}`
-                : `已达成 ${car.minPlayers} 人最低开车人数，`}
-              {car.status === 'almost_full' && `人数已接近满车，建议确认最终名单！`}
-              {car.status === 'confirmed' && `车局已成，可以通知玩家支付定金啦～`}
+                : `已达成 ${car.minPlayers} 人最低开车人数，${isCaptain && !car.finalConfirmed ? '你可以确认最终名单来锁定车局！' : '车局可以成行啦～'}`}
+              {car.finalConfirmed && ' 车局已锁定，等待开本。'}
             </Text>
 
             <View className={styles.genderRow}>
@@ -170,7 +170,7 @@ const CarDetailPage: React.FC = () => {
             </View>
           ))}
 
-          {car.players.length < car.maxPlayers && car.status !== 'finished' && car.status !== 'confirmed' && (
+          {car.players.length < car.maxPlayers && !car.finalConfirmed && car.status !== 'finished' && car.status !== 'cancelled' && (
             Array.from({ length: Math.min(3, car.maxPlayers - car.players.length) }).map((_, i) => (
               <View key={`slot-${i}`} className={styles.emptySlot}>
                 <View className={styles.slotAvatar}>+</View>
@@ -257,19 +257,24 @@ const CarDetailPage: React.FC = () => {
         </View>
 
         <View className={styles.btnRow}>
-          {isCaptain && car.status !== 'confirmed' && car.status !== 'finished' && (
+          {isCaptain && !car.finalConfirmed && car.status !== 'finished' && car.status !== 'cancelled' && (
             <View className={classnames(styles.btn, styles.btnOutline)} onClick={handleInvite}>
               邀请好友
             </View>
           )}
-          {car.status === 'confirmed' && !car.finalConfirmed && isCaptain && (
+          {canConfirmFinal && (
             <View className={classnames(styles.btn, styles.btnAccent, styles.btnFull)} onClick={handleConfirmList}>
-              ✅ 确认最终名单
+              ✅ 确认最终名单（{confirmed}/{car.minPlayers}人已达标）
             </View>
           )}
-          {(car.status !== 'confirmed' || car.finalConfirmed) && (
+          {car.finalConfirmed && (
             <View className={classnames(styles.btn, styles.btnPrimary, styles.btnFull)}>
-              {car.status === 'finished' ? '查看复盘' : car.finalConfirmed ? '车局已锁定 ✓' : '查看/修改信息'}
+              {car.status === 'finished' ? '查看复盘' : '🔒 车局已锁定 ✓'}
+            </View>
+          )}
+          {!canConfirmFinal && !car.finalConfirmed && (
+            <View className={classnames(styles.btn, styles.btnPrimary, styles.btnFull)}>
+              {car.status === 'finished' ? '查看复盘' : '查看/修改信息'}
             </View>
           )}
         </View>

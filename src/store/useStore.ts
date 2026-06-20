@@ -21,6 +21,10 @@ interface AppState {
   sendNotice: (carId: string) => void;
   confirmFinalList: (carId: string) => void;
   joinCar: (carId: string, player: Car['players'][0]) => void;
+  updateScript: (scriptId: string, data: Partial<Script>) => void;
+  updateRoom: (roomId: string, data: Partial<Room>) => void;
+  updateDM: (dmId: string, data: Partial<DM>) => void;
+  toggleSlot: (roomId: string, slotId: string) => void;
 }
 
 const mockUsers: User[] = [
@@ -85,6 +89,30 @@ export const useStore = create<AppState>((set) => ({
       if (confirmedCount >= car.maxPlayers) newStatus = 'confirmed';
       else if (confirmedCount >= car.minPlayers - 1) newStatus = 'almost_full';
       return { ...car, players: newPlayers, status: newStatus };
+    })
+  })),
+
+  updateScript: (scriptId: string, data: Partial<Script>) => set((state) => ({
+    scripts: state.scripts.map(s => s.id === scriptId ? { ...s, ...data } : s)
+  })),
+
+  updateRoom: (roomId: string, data: Partial<Room>) => set((state) => ({
+    rooms: state.rooms.map(r => r.id === roomId ? { ...r, ...data } : r)
+  })),
+
+  updateDM: (dmId: string, data: Partial<DM>) => set((state) => ({
+    dms: state.dms.map(d => d.id === dmId ? { ...d, ...data } : d)
+  })),
+
+  toggleSlot: (roomId: string, slotId: string) => set((state) => ({
+    rooms: state.rooms.map(r => {
+      if (r.id !== roomId) return r;
+      return {
+        ...r,
+        availableSlots: r.availableSlots.map(s =>
+          s.id === slotId ? { ...s, available: !s.available } : s
+        )
+      };
     })
   }))
 }));

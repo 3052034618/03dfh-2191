@@ -594,3 +594,138 @@
   font-size: $font-size-md;
   color: $color-text-secondary;
 }
+
+.minPlayersRow {
+  display: flex;
+  align-items: center;
+  margin-top: 4rpx;
+  flex-wrap: wrap;
+}
+
+.editableValue {
+  display: inline-flex;
+  align-items: center;
+  gap: 4rpx;
+  cursor: pointer;
+}
+
+.highlightNum {
+  color: $color-accent;
+  font-weight: $font-weight-bold;
+  font-size: $font-size-md;
+}
+
+.editHint {
+  font-size: $font-size-xs;
+  margin-left: 4rpx;
+}
+
+.inlineEdit {
+  display: inline-flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.counterBtn {
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: $radius-sm;
+  background: $color-bg-hover;
+  border: 1px solid $color-border;
+  color: $color-text-secondary;
+  font-size: $font-size-lg;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: $font-weight-semibold;
+}
+
+.counterBtnDisabled {
+  opacity: 0.3;
+}
+
+.counterValue {
+  font-size: $font-size-lg;
+  color: $color-accent;
+  font-weight: $font-weight-bold;
+  min-width: 40rpx;
+  text-align: center;
+}
+
+.saveBtn {
+  padding: 6rpx 20rpx;
+  background: $color-primary;
+  color: #fff;
+  border-radius: $radius-xs;
+  font-size: $font-size-xs;
+  font-weight: 500;
+}
+
+.cancelBtn {
+  padding: 6rpx 20rpx;
+  background: $color-bg-hover;
+  color: $color-text-tertiary;
+  border-radius: $radius-xs;
+  font-size: $font-size-xs;
+}
+
+.dmScriptEditor {
+  margin-top: $spacing-sm;
+  background: $color-bg-hover;
+  border-radius: $radius-md;
+  padding: $spacing-md;
+}
+
+.editorLabel {
+  font-size: $font-size-xs;
+  color: $color-primary-light;
+  margin-bottom: $spacing-sm;
+  display: block;
+}
+
+.scriptCheckList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-xs;
+  margin-bottom: $spacing-sm;
+}
+
+.scriptCheckItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 4rpx;
+  padding: 6rpx 14rpx;
+  background: $color-bg-card;
+  border: 1px solid $color-border;
+  border-radius: $radius-xs;
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.scriptChecked {
+  border-color: $color-primary;
+  background: $color-primary-bg;
+  color: $color-primary-light;
+}
+
+.checkIcon {
+  font-size: $font-size-sm;
+}
+
+.checkName {
+  font-size: $font-size-xs;
+  @include text-ellipsis;
+  max-width: 160rpx;
+}
+
+.editorActions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.editLink {
+  padding: 6rpx 14rpx;
+  color: $color-primary-light;
+  font-size: $font-size-xs;
+  font-weight: 500;
+}

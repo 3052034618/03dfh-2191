@@ -342,3 +342,30 @@
   font-size: $font-size-sm;
   color: $color-text-secondary;
 }
+
+.scriptSelectWrap {
+  position: relative;
+  margin-bottom: $spacing-md;
+  border-radius: $radius-lg;
+  border: 3rpx solid transparent;
+  transition: all $transition-base;
+  overflow: hidden;
+}
+
+.scriptSelectActive {
+  border-color: $color-primary;
+  box-shadow: 0 0 0 2rpx rgba(123, 75, 255, 0.2);
+}
+
+.selectedCheck {
+  position: absolute;
+  top: 16rpx;
+  right: 16rpx;
+  padding: 6rpx 20rpx;
+  background: $color-primary;
+  color: #fff;
+  border-radius: $radius-round;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  z-index: 2;
+}

@@ -65,13 +65,14 @@ const CarsPage: React.FC = () => {
   const getActionProps = (car: Car) => {
     const isCaptain = car.captainId === currentUser.id;
     const me = car.players.find(p => p.id === currentUser.id);
+    const confirmed = getConfirmedCount(car);
 
     if (car.status === 'finished' || car.status === 'cancelled') {
       return {};
     }
 
     if (isCaptain) {
-      if (car.status === 'confirmed' && !car.finalConfirmed) {
+      if (!car.finalConfirmed && confirmed >= car.minPlayers) {
         return {
           primaryText: '确认最终名单',
           onPrimary: () => {

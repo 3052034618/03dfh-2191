@@ -12,6 +12,9 @@ type CarFilter = 'all' | 'almost' | 'needNotice' | 'confirmed';
 const AdminPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<AdminTab>('cars');
   const [carFilter, setCarFilter] = useState<CarFilter>('all');
+  const [editingDmId, setEditingDmId] = useState<string | null>(null);
+  const [editingScriptId, setEditingScriptId] = useState<string | null>(null);
+  const [tempMinPlayers, setTempMinPlayers] = useState<number>(0);
   const {
     scripts,
     rooms,
@@ -19,7 +22,10 @@ const AdminPage: React.FC = () => {
     cars,
     storeNotice,
     sendDepositReminder,
-    sendNotice
+    sendNotice,
+    updateScript,
+    toggleSlot,
+    updateDM
   } = useStore();
 
   const almostFullCount = useMemo(
@@ -45,15 +51,39 @@ const AdminPage: React.FC = () => {
     return result;
   }, [cars, carFilter]);
 
-  const handleToggleScriptStock = (_scriptId: string, value: boolean) => {
+  const handleToggleScriptStock = (scriptId: string, value: boolean) => {
+    updateScript(scriptId, { inStock: value });
     Taro.showToast({
       title: value ? '已上架' : '已下架',
       icon: 'success'
     });
   };
 
-  const handleToggleSlot = (_roomId: string, _slotId: string) => {
-    Taro.showToast({ title: '时段已更新', icon: 'success' });
+  const handleToggleSlot = (roomId: string, slotId: string) => {
+    toggleSlot(roomId, slotId);
+  };
+
+  const handleToggleDmScript = (dmId: string, scriptId: string, currentIds: string[]) => {
+    const newIds = currentIds.includes(scriptId)
+      ? currentIds.filter(id => id !== scriptId)
+      : [...currentIds, scriptId];
+    updateDM(dmId, { scriptIds: newIds });
+  };
+
+  const handleEditMinPlayers = (scriptId: string, currentMin: number) => {
+    setEditingScriptId(scriptId);
+    setTempMinPlayers(currentMin);
+  };
+
+  const handleSaveMinPlayers = (scriptId: string) => {
+    const script = scripts.find(s => s.id === scriptId);
+    if (!script || tempMinPlayers < 2 || tempMinPlayers > script.maxPlayers) {
+      Taro.showToast({ title: '人数需在2到最大人数之间', icon: 'none' });
+      return;
+    }
+    updateScript(scriptId, { minPlayers: tempMinPlayers });
+    setEditingScriptId(null);
+    Taro.showToast({ title: '最低人数已更新', icon: 'success' });
   };
 
   const handleSendAllForCar = (carId: string) => {
@@ -148,10 +178,34 @@ const AdminPage: React.FC = () => {
                     </View>
                   </View>
                   <View className={styles.scriptMeta}>
-                    {s.type} · {s.minPlayers}-{s.maxPlayers}人 · 约{s.duration}小时
+                    {s.type} · 约{s.duration}小时
                   </View>
                   <View className={styles.scriptMeta}>
                     难度 {formatDifficulty(s.difficulty)} · 可带DM {s.dmIds.length}位
+                  </View>
+                  <View className={styles.minPlayersRow}>
+                    <Text className={styles.scriptMeta}>最低开车人数：</Text>
+                    {editingScriptId === s.id ? (
+                      <View className={styles.inlineEdit}>
+                        <View
+                          className={classnames(styles.counterBtn, tempMinPlayers <= 2 && styles.counterBtnDisabled)}
+                          onClick={() => setTempMinPlayers(Math.max(2, tempMinPlayers - 1))}
+                        >-</View>
+                        <Text className={styles.counterValue}>{tempMinPlayers}</Text>
+                        <View
+                          className={classnames(styles.counterBtn, tempMinPlayers >= s.maxPlayers && styles.counterBtnDisabled)}
+                          onClick={() => setTempMinPlayers(Math.min(s.maxPlayers, tempMinPlayers + 1))}
+                        >+</View>
+                        <View className={styles.saveBtn} onClick={() => handleSaveMinPlayers(s.id)}>保存</View>
+                        <View className={styles.cancelBtn} onClick={() => setEditingScriptId(null)}>取消</View>
+                      </View>
+                    ) : (
+                      <View className={styles.editableValue} onClick={() => handleEditMinPlayers(s.id, s.minPlayers)}>
+                        <Text className={styles.highlightNum}>{s.minPlayers}</Text>
+                        <Text className={styles.scriptMeta}>-{s.maxPlayers}人</Text>
+                        <Text className={styles.editHint}>✏️</Text>
+                      </View>
+                    )}
                   </View>
                 </View>
                 <View className={styles.scriptBottom}>
@@ -195,11 +249,9 @@ const AdminPage: React.FC = () => {
                     key={slot.id}
                     className={classnames(
                       styles.slotItem,
-                      slot.available
-                        ? (slot.id === r.availableSlots[0]?.id ? styles.slotActive : styles.slotAvailable)
-                        : styles.slotBooked
+                      slot.available ? styles.slotAvailable : styles.slotBooked
                     )}
-                    onClick={() => slot.available && handleToggleSlot(r.id, slot.id)}
+                    onClick={() => handleToggleSlot(r.id, slot.id)}
                   >
                     {slot.startTime.slice(0, 5)}
                     {!slot.available && <Text style={{ display: 'block', fontSize: 18 }}>已约</Text>}
@@ -252,13 +304,10 @@ const AdminPage: React.FC = () => {
         <View className={styles.section}>
           <View className={styles.sectionHeader}>
             <Text className={styles.sectionTitle}>🎙️ DM 排班表</Text>
-            <Text className={styles.actionLink} onClick={() => Taro.showToast({ title: '排班编辑功能开发中', icon: 'none' })}>
-              编辑排班
-            </Text>
           </View>
 
           {dms.map(dm => {
-            const canBringScripts = scripts.filter(s => dm.scriptIds.includes(s.id)).map(s => s.name);
+            const canBringScripts = scripts.filter(s => dm.scriptIds.includes(s.id));
             return (
               <View key={dm.id} className={styles.dmItem}>
                 <View className={styles.dmAvatar}>
@@ -270,24 +319,50 @@ const AdminPage: React.FC = () => {
                     <Text className={styles.dmRating}>⭐ {dm.rating}</Text>
                   </View>
                   <View className={styles.dmScripts}>
-                    擅长带本：{canBringScripts.join('、') || '暂无'}
+                    擅长带本：{canBringScripts.map(s => s.name).join('、') || '暂无'}
                   </View>
-                  <View className={styles.dmSlots}>
-                    {['13:00', '14:00', '19:00', '20:00'].map(t => {
-                      const isFree = dm.availableSlots.includes(t);
-                      return (
-                        <View
-                          key={t}
-                          className={classnames(
-                            styles.dmSlotTag,
-                            isFree ? styles.dmSlotFree : styles.dmSlotBusy
-                          )}
-                        >
-                          {t.slice(0, 5)} {isFree ? '空' : '约'}
-                        </View>
-                      );
-                    })}
-                  </View>
+
+                  {editingDmId === dm.id ? (
+                    <View className={styles.dmScriptEditor}>
+                      <Text className={styles.editorLabel}>点击切换可带本：</Text>
+                      <View className={styles.scriptCheckList}>
+                        {scripts.map(s => {
+                          const checked = dm.scriptIds.includes(s.id);
+                          return (
+                            <View
+                              key={s.id}
+                              className={classnames(styles.scriptCheckItem, checked && styles.scriptChecked)}
+                              onClick={() => handleToggleDmScript(dm.id, s.id, dm.scriptIds)}
+                            >
+                              <Text className={styles.checkIcon}>{checked ? '✓' : '○'}</Text>
+                              <Text className={styles.checkName}>{s.name}</Text>
+                            </View>
+                          );
+                        })}
+                      </View>
+                      <View className={styles.editorActions}>
+                        <View className={styles.saveBtn} onClick={() => { setEditingDmId(null); Taro.showToast({ title: '已保存', icon: 'success' }); }}>完成</View>
+                      </View>
+                    </View>
+                  ) : (
+                    <View className={styles.dmSlots}>
+                      {['13:00', '14:00', '19:00', '20:00'].map(t => {
+                        const isFree = dm.availableSlots.includes(t);
+                        return (
+                          <View
+                            key={t}
+                            className={classnames(
+                              styles.dmSlotTag,
+                              isFree ? styles.dmSlotFree : styles.dmSlotBusy
+                            )}
+                          >
+                            {t.slice(0, 5)} {isFree ? '空' : '约'}
+                          </View>
+                        );
+                      })}
+                      <View className={styles.editLink} onClick={() => setEditingDmId(dm.id)}>✏️ 编辑带本</View>
+                    </View>
+                  )}
                 </View>
               </View>
             );

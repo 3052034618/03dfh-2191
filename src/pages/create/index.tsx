@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { View, Text, ScrollView, Image } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import { useStore } from '@/store/useStore';
@@ -21,6 +21,20 @@ const CreatePage: React.FC = () => {
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
   const [selectedDM, setSelectedDM] = useState<DM | null>(null);
   const [acceptStrangers, setAcceptStrangers] = useState(false);
+
+  useEffect(() => {
+    const handler = (scriptId: string) => {
+      const found = scripts.find(s => s.id === scriptId);
+      if (found) {
+        setSelectedScript(found);
+        setStep(2);
+      }
+    };
+    Taro.eventCenter.on('preSelectScript', handler);
+    return () => {
+      Taro.eventCenter.off('preSelectScript', handler);
+    };
+  }, [scripts]);
 
   const availableScripts = useMemo(() => {
     return scripts.filter(s => s.inStock);
@@ -162,8 +176,18 @@ const CreatePage: React.FC = () => {
               🔍 搜索剧本名、标签...
             </View>
             {availableScripts.map(s => (
-              <View key={s.id} onClick={() => setSelectedScript(s)}>
-                <ScriptCard script={s} />
+              <View
+                key={s.id}
+                className={classnames(
+                  styles.scriptSelectWrap,
+                  selectedScript?.id === s.id && styles.scriptSelectActive
+                )}
+                onClick={() => setSelectedScript(selectedScript?.id === s.id ? null : s)}
+              >
+                <ScriptCard script={s} onClick={() => setSelectedScript(selectedScript?.id === s.id ? null : s)} />
+                {selectedScript?.id === s.id && (
+                  <View className={styles.selectedCheck}>✓ 已选</View>
+                )}
               </View>
             ))}
           </View>
