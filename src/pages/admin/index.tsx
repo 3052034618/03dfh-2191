@@ -15,6 +15,24 @@ const AdminPage: React.FC = () => {
   const [editingDmId, setEditingDmId] = useState<string | null>(null);
   const [editingScriptId, setEditingScriptId] = useState<string | null>(null);
   const [tempMinPlayers, setTempMinPlayers] = useState<number>(0);
+  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().slice(0, 10));
+
+  const dateOptions = useMemo(() => {
+    const options: { date: string; label: string; weekday: string }[] = [];
+    const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date();
+      d.setDate(d.getDate() + i);
+      const dateStr = d.toISOString().slice(0, 10);
+      const label = i === 0 ? '今天' : i === 1 ? '明天' : `${d.getMonth() + 1}/${d.getDate()}`;
+      options.push({
+        date: dateStr,
+        label,
+        weekday: weekdays[d.getDay()]
+      });
+    }
+    return options;
+  }, []);
   const {
     scripts,
     rooms,
@@ -378,83 +396,116 @@ const AdminPage: React.FC = () => {
 
       {activeTab === 'schedule' && (
         <View className={styles.section}>
-          <View className={styles.sectionHeader}>
-            <Text className={styles.sectionTitle}>🗓️ 排班总览（剧本 × 房间 × DM × 时段）</Text>
+          <View className={styles.calendarHeader}>
+            <Text className={styles.sectionTitle}>🗓️ 排班日历</Text>
+            <View className={styles.dateSelector}>
+              {dateOptions.map(d => (
+                <View
+                key={d.date}
+                className={classnames(
+                  styles.dateOption,
+                  selectedDate === d.date && styles.dateOptionActive
+                )}
+                onClick={() => setSelectedDate(d.date)}
+              >
+                <Text className={styles.dateDay}>{d.label}</Text>
+                <Text className={styles.dateWeekday}>{d.weekday}</Text>
+              </View>
+            ))}
           </View>
+        </View>
+
+        <View className={styles.calendarGrid}>
+            {rooms.map(room => {
+              const slotsForDate = room.availableSlots.filter(s => s.date === selectedDate);
+              return (
+                <View key={room.id} className={styles.calendarRow}>
+                  <View className={styles.calendarRoomCol}>
+                    <Text className={styles.calendarRoomName}>{room.name}</Text>
+                    <Text className={styles.calendarRoomMeta}>{room.theme} · {room.capacity}人</Text>
+                  </View>
+
+                  <View className={styles.calendarSlotsRow}>
+                    {slotsForDate.length === 0 ? (
+                      <View className={styles.calendarNoSlots}>暂无排期</View>
+                    ) : (
+                      slotsForDate.map(slot => {
+                        const carForSlot = cars.find(c =>
+                          c.roomId === room.id &&
+                          c.date === selectedDate &&
+                          c.startTime === slot.startTime
+                        );
+                        const isLocked = carForSlot?.finalConfirmed;
+
+                        return (
+                          <View
+                            key={slot.id}
+                            className={classnames(
+                              styles.calendarSlot,
+                              !slot.available && styles.calendarSlotBooked,
+                              carForSlot && styles.calendarSlotHasCar,
+                              isLocked && styles.calendarSlotLocked
+                            )}
+                            onClick={() => {
+                              if (carForSlot) {
+                                Taro.navigateTo({ url: `/pages/car-detail/index?id=${carForSlot.id}` });
+                              } else if (slot.available) {
+                                handleToggleSlot(room.id, slot.id);
+                              }
+                            }}
+                          >
+                            <Text className={styles.calendarSlotTime}>{slot.startTime.slice(0, 5)}</Text>
+                            {!slot.available && !carForSlot && (
+                              <Text className={styles.calendarSlotStatus}>已关闭</Text>
+                            )}
+                            {carForSlot && (
+                              <View className={styles.calendarSlotContent}>
+                                <Text className={styles.calendarSlotScript}>{carForSlot.scriptName}</Text>
+                                <Text className={styles.calendarSlotMeta}>
+                                  DM {carForSlot.dmName} · {carForSlot.captainName}
+                                </Text>
+                                <View className={styles.calendarSlotBadge}>
+                                  {isLocked ? '🔒 已锁定' : getStatusText(carForSlot.status, carForSlot.finalConfirmed)}
+                                </View>
+                              </View>
+                            )}
+                            {slot.available && !carForSlot && (
+                              <Text className={styles.calendarSlotEmpty}>空</Text>
+                            )}
+                          </View>
+                        );
+                      })
+                    )}
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+
+          <View className={styles.calendarLegend}>
+            <View className={styles.legendItem}>
+              <View className={classnames(styles.legendDot, styles.legendDotEmpty)} />
+              <Text className={styles.legendText}>可约</Text>
+            </View>
+            <View className={styles.legendItem}>
+              <View className={classnames(styles.legendDot, styles.legendDotBooked)} />
+              <Text className={styles.legendText}>已关闭</Text>
+            </View>
+            <View className={styles.legendItem}>
+              <View className={classnames(styles.legendDot, styles.legendDotCar)} />
+              <Text className={styles.legendText}>有车局</Text>
+            </View>
+            <View className={styles.legendItem}>
+              <View className={classnames(styles.legendDot, styles.legendDotLocked)} />
+              <Text className={styles.legendText}>已锁定</Text>
+            </View>
+          </View>
+
           <View className={styles.scheduleTip}>
             <Text style={{ color: '#9B7DFF' }}>💡 提示：</Text>
-            点击时段可开关房间可用性。若时段标红或房间/DM 标灰，则该组合会被系统自动排除，熟客发起车局时不会看到冲突选项。
+            点击可约时段可快速开关，点击有车局的时段可直接跳转车局详情。
+            已关闭的时段熟客发起时不会出现。
           </View>
-
-          {rooms.map(room => (
-            <View key={room.id} className={styles.scheduleRow}>
-              <View className={styles.scheduleRoomHeader}>
-                <Text className={styles.scheduleRoomName}>{room.name}</Text>
-                <Text className={styles.scheduleRoomMeta}>{room.theme}主题 · {room.capacity}人</Text>
-              </View>
-
-              {scripts.filter(s => s.inStock && room.capacity >= s.minPlayers).map(script => (
-                <View key={script.id} className={styles.scheduleScriptRow}>
-                  <View className={styles.scheduleScriptCell}>
-                    <Text className={styles.scheduleScriptName}>{script.name}</Text>
-                    <Text className={styles.scheduleScriptMeta}>
-                      {script.type} · {script.minPlayers}-{script.maxPlayers}人
-                    </Text>
-                  </View>
-                  <View className={styles.scheduleDmRow}>
-                    {dms.map(dm => {
-                      const canBring = dm.scriptIds.includes(script.id);
-                      return (
-                        <View
-                          key={dm.id}
-                          className={classnames(
-                            styles.scheduleDmCell,
-                            !canBring && styles.scheduleDmCellDisabled
-                          )}
-                        >
-                          <Image
-                            className={styles.scheduleDmAvatar}
-                            src={dm.avatar}
-                            mode="aspectFill"
-                          />
-                          <View className={styles.scheduleDmInfo}>
-                            <Text className={styles.scheduleDmName}>
-                              {canBring ? `DM ${dm.name}` : `DM ${dm.name}（不带本）`}
-                            </Text>
-                            <View className={styles.scheduleSlotRow}>
-                              {room.availableSlots.map(slot => {
-                                const dmFree = dm.availableSlots.includes(slot.startTime) || dm.availableSlots.includes(slot.date);
-                                const clickable = canBring && dmFree;
-                                return (
-                                  <View
-                                    key={slot.id}
-                                    className={classnames(
-                                      styles.scheduleSlot,
-                                      !slot.available && styles.scheduleSlotBooked,
-                                      !clickable && slot.available && styles.scheduleSlotConflict
-                                    )}
-                                    onClick={() => canBring && handleToggleSlot(room.id, slot.id)}
-                                  >
-                                    {slot.startTime.slice(0, 5)}
-                                  </View>
-                                );
-                              })}
-                            </View>
-                          </View>
-                        </View>
-                      );
-                    })}
-                  </View>
-                </View>
-              ))}
-
-              {scripts.filter(s => s.inStock && room.capacity >= s.minPlayers).length === 0 && (
-                <View className={styles.scheduleEmpty}>
-                  暂无符合该房间容量的剧本
-                </View>
-              )}
-            </View>
-          ))}
         </View>
       )}
 

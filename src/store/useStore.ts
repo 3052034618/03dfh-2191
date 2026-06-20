@@ -19,7 +19,7 @@ interface AppState {
   addCar: (car: Car) => void;
   updateCar: (carId: string, data: Partial<Car>) => void;
   updatePlayer: (carId: string, playerId: string, data: Partial<Car['players'][0]>) => void;
-  sendDepositReminder: (carId: string) => void;
+  sendDepositReminder: (carId: string, playerId?: string) => void;
   sendNotice: (carId: string) => void;
   confirmFinalList: (carId: string) => void;
   joinCar: (carId: string, player: Car['players'][0]) => void;
@@ -27,6 +27,7 @@ interface AppState {
   updateRoom: (roomId: string, data: Partial<Room>) => void;
   updateDM: (dmId: string, data: Partial<DM>) => void;
   toggleSlot: (roomId: string, slotId: string) => void;
+  togglePlayerDeposit: (carId: string, playerId: string, paid: boolean) => void;
 }
 
 const mockUsers: User[] = [
@@ -72,8 +73,29 @@ export const useStore = create<AppState>((set) => ({
     })
   })),
 
-  sendDepositReminder: (carId: string) => set((state) => ({
-    cars: state.cars.map(c => c.id === carId ? { ...c, depositSent: true } : c)
+  sendDepositReminder: (carId: string, playerId?: string) => set((state) => ({
+    cars: state.cars.map(c => {
+      if (c.id !== carId) return c;
+      if (playerId) {
+        return {
+          ...c,
+          players: c.players.map(p =>
+            p.id === playerId
+              ? { ...p, depositPaid: false, depositAmount: c.depositAmount }
+              : p
+          )
+        };
+      }
+      return {
+        ...c,
+        depositSent: true,
+        players: c.players.map(p => ({
+          ...p,
+          depositPaid: false,
+          depositAmount: c.depositAmount
+        }))
+      };
+    })
   })),
 
   sendNotice: (carId: string) => set((state) => ({
@@ -82,6 +104,25 @@ export const useStore = create<AppState>((set) => ({
 
   confirmFinalList: (carId: string) => set((state) => ({
     cars: state.cars.map(c => c.id === carId ? { ...c, finalConfirmed: true, status: 'confirmed' } : c)
+  })),
+
+  togglePlayerDeposit: (carId: string, playerId: string, paid: boolean) => set((state) => ({
+    cars: state.cars.map(car => {
+      if (car.id !== carId) return car;
+      return {
+        ...car,
+        players: car.players.map(p =>
+          p.id === playerId
+            ? {
+                ...p,
+                depositPaid: paid,
+                depositPaidAt: paid ? new Date().toISOString() : undefined,
+                depositAmount: paid ? car.depositAmount : p.depositAmount
+              }
+            : p
+        )
+      };
+    })
   })),
 
   joinCar: (carId: string, player: Car['players'][0]) => set((state) => ({

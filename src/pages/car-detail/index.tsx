@@ -3,14 +3,14 @@ import { View, Text, Image, ScrollView } from '@tarojs/components';
 import Taro, { useRouter } from '@tarojs/taro';
 import { useStore } from '@/store/useStore';
 import StatusBadge from '@/components/StatusBadge';
-import { formatDate, getConfirmedCount, getRemainingCount, getGenderCount, calcDepositTotal, getStatusText } from '@/utils';
+import { formatDate, getConfirmedCount, getRemainingCount, getGenderCount, calcDepositTotal, getStatusText, getDepositCount, generateInvitationText } from '@/utils';
 import classnames from 'classnames';
 import styles from './index.module.scss';
 
 const CarDetailPage: React.FC = () => {
   const router = useRouter();
   const id = router.params.id;
-  const { cars, currentUser, storeNotice, sendDepositReminder, sendNotice, confirmFinalList, dms, scripts } = useStore();
+  const { cars, currentUser, storeNotice, sendDepositReminder, sendNotice, confirmFinalList, dms, scripts, togglePlayerDeposit } = useStore();
 
   const car = useMemo(() => cars.find(c => c.id === id), [cars, id]);
   const script = useMemo(() => scripts.find(s => s.id === car?.scriptId), [scripts, car?.scriptId]);
@@ -29,6 +29,8 @@ const CarDetailPage: React.FC = () => {
   const canConfirmFinal = isCaptain && !car.finalConfirmed && confirmed >= car.minPlayers && car.status !== 'finished' && car.status !== 'cancelled';
   const { male, female } = getGenderCount(car.players);
   const depositTotal = calcDepositTotal(car);
+  const { paid, total, unpaid } = getDepositCount(car);
+  const depositProgress = total > 0 ? Math.round((paid / total) * 100) : 0;
 
   const needMale = Math.max(0, car.genderRequirement.male - male);
   const needFemale = Math.max(0, car.genderRequirement.female - female);
@@ -68,15 +70,7 @@ const CarDetailPage: React.FC = () => {
   };
 
   const handleCopyInfo = () => {
-    const confirmedPlayers = car.players.filter(p => p.confirmed);
-    const text = `【${car.scriptName}】车局锁定名单
-时间：${formatDate(car.date)} ${car.startTime}-${car.endTime}
-房间：${car.roomName}
-DM：${car.dmName}
-车头：${car.captainName}
-人数：${confirmedPlayers.length}/${car.minPlayers}（已锁定）
-玩家：${confirmedPlayers.map(p => p.name).join('、')}
-请到店提前15分钟签到，定金已锁定不退~`;
+    const text = generateInvitationText(car, storeNotice, !!car.finalConfirmed);
     Taro.setClipboardData({
       data: text,
       success: () => Taro.showToast({ title: '邀请信息已复制', icon: 'success' })
@@ -84,12 +78,45 @@ DM：${car.dmName}
   };
 
   const handleViewFinalList = () => {
-    const confirmed = car.players.filter(p => p.confirmed);
+    const confirmedPlayers = car.players.filter(p => p.confirmed);
+    const list = confirmedPlayers.map((p, i) =>
+      `${i + 1}. ${p.name}${p.role === '车头' ? '（车头）' : ''}  ${p.depositPaid ? '✓已付定金' : '⏳待付定金'}`
+    ).join('\n');
     Taro.showModal({
-      title: '🔒 已锁定最终名单',
-      content: `共 ${confirmed.length} 人确认：\n${confirmed.map((p, i) => `${i + 1}. ${p.name}${p.role === '车头' ? '（车头）' : ''}`).join('\n')}`,
+      title: `🔒 已锁定最终名单（${paid}/${total}已付定金）`,
+      content: list,
       showCancel: false,
       confirmColor: '#7B4BFF'
+    });
+  };
+
+  const handleToggleDeposit = (playerId: string, playerName: string, isPaid: boolean) => {
+    Taro.showModal({
+      title: isPaid ? '取消定金标记' : '标记已付定金',
+      content: isPaid
+        ? `确定将「${playerName}」改为未付定金？`
+        : `确定将「${playerName}」标记为已付¥${car.depositAmount}定金？`,
+      confirmColor: '#7B4BFF',
+      success: (res) => {
+        if (res.confirm) {
+          togglePlayerDeposit(car.id, playerId, !isPaid);
+          Taro.showToast({ title: `已${isPaid ? '取消' : '标记'}`, icon: 'success' });
+        }
+      }
+    });
+  };
+
+  const handleRemindSingle = (playerId: string, playerName: string) => {
+    Taro.showModal({
+      title: '单独发送定金提醒',
+      content: `确定单独向「${playerName}」发送定金提醒？`,
+      confirmColor: '#7B4BFF',
+      success: (res) => {
+        if (res.confirm) {
+          sendDepositReminder(car.id, playerId);
+          Taro.showToast({ title: '已单独提醒', icon: 'success' });
+        }
+      }
     });
   };
 
@@ -179,6 +206,28 @@ DM：${car.dmName}
           </Text>
         </View>
 
+        {car.finalConfirmed && car.depositSent && (
+          <View className={styles.depositProgress}>
+            <View className={styles.depositProgressHeader}>
+              <Text className={styles.depositProgressTitle}>💰 定金进度</Text>
+              <Text className={styles.depositProgressValue}>
+                {paid}/{total} 人已付 · ¥{paid * car.depositAmount}/¥{total * car.depositAmount}
+              </Text>
+            </View>
+            <View className={styles.depositProgressBar}>
+              <View
+                className={styles.depositProgressFill}
+                style={{ width: `${depositProgress}%` }}
+              />
+            </View>
+            {unpaid.length > 0 && (
+              <Text className={styles.depositUnpaid}>
+                待付：{unpaid.map(p => p.name).join('、')}
+              </Text>
+            )}
+          </View>
+        )}
+
         <View className={styles.playersGrid}>
           {car.players.map(p => (
             <View key={p.id} className={styles.playerItem}>
@@ -190,11 +239,36 @@ DM：${car.dmName}
                 <Image className={styles.playerImg} src={p.avatar} mode="aspectFill" />
                 {p.role === '车头' && <View className={styles.captainMark}>车头</View>}
                 {p.confirmed && p.role !== '车头' && <View className={styles.confirmedMark}>✓</View>}
+                {car.depositSent && canManage && (
+                  <View
+                    className={classnames(
+                      styles.depositMark,
+                      p.depositPaid ? styles.depositPaid : styles.depositUnpaid
+                    )}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleToggleDeposit(p.id, p.name, !!p.depositPaid);
+                    }}
+                  >
+                    {p.depositPaid ? '✓ 已付' : '待付'}
+                  </View>
+                )}
               </View>
               <Text className={styles.playerName}>{p.name}</Text>
               <Text className={styles.playerStatus} style={{ color: p.confirmed ? '#00B42A' : '#FF7D00' }}>
                 {p.confirmed ? '已确认' : '待确认'}
               </Text>
+              {car.depositSent && !p.depositPaid && canManage && p.confirmed && (
+                <View
+                  className={styles.playerRemindBtn}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleRemindSingle(p.id, p.name);
+                  }}
+                >
+                  📩 催定金
+                </View>
+              )}
             </View>
           ))}
 

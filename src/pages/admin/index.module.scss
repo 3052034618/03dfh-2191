@@ -876,3 +876,198 @@
   font-size: $font-size-xs;
   color: $color-text-tertiary;
 }
+
+.calendarHeader {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+  margin-bottom: $spacing-md;
+}
+
+.dateSelector {
+  display: flex;
+  gap: $spacing-xs;
+  overflow-x: auto;
+  padding-bottom: $spacing-xs;
+  @include scroll-x-container;
+
+  .dateOption {
+    flex-shrink: 0;
+    padding: $spacing-sm $spacing-md;
+    background: $color-bg-card;
+    border: 1px solid $color-border;
+    border-radius: $radius-md;
+    text-align: center;
+    min-width: 100rpx;
+    transition: all $transition-fast;
+
+    .dateDay {
+      font-size: $font-size-md;
+      font-weight: $font-weight-semibold;
+      color: $color-text-secondary;
+      display: block;
+    }
+
+    .dateWeekday {
+      font-size: $font-size-xs;
+      color: $color-text-tertiary;
+    }
+  }
+
+  .dateOptionActive {
+    background: $color-primary-bg;
+    border-color: $color-primary;
+    .dateDay { color: $color-primary-light; }
+    .dateWeekday { color: $color-primary-light; }
+  }
+}
+
+.calendarGrid {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.calendarRow {
+  display: flex;
+  gap: $spacing-md;
+  background: $color-bg-card;
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  border: 1px solid $color-border;
+}
+
+.calendarRoomCol {
+  width: 140rpx;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.calendarRoomName {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.calendarRoomMeta {
+  font-size: 20rpx;
+  color: $color-text-tertiary;
+}
+
+.calendarSlotsRow {
+  flex: 1;
+  display: flex;
+  gap: $spacing-xs;
+  overflow-x: auto;
+  @include scroll-x-container;
+}
+
+.calendarNoSlots {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.calendarSlot {
+  flex-shrink: 0;
+  width: 220rpx;
+  padding: $spacing-sm;
+  background: $color-bg-hover;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  display: flex;
+  flex-direction: column;
+  gap: 2rpx;
+  transition: all $transition-fast;
+}
+
+.calendarSlotBooked {
+  background: rgba(245, 63, 63, 0.08);
+  opacity: 0.6;
+  .calendarSlotTime { color: $color-error; }
+}
+
+.calendarSlotHasCar {
+  background: linear-gradient(135deg, rgba(255, 125, 84, 0.12) 0%, transparent 60%);
+  border-color: rgba(255, 125, 84, 0.3);
+}
+
+.calendarSlotLocked {
+  background: linear-gradient(135deg, rgba(123, 75, 255, 0.15) 0%, transparent 60%);
+  border-color: rgba(123, 75, 255, 0.4);
+}
+
+.calendarSlotTime {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+}
+
+.calendarSlotStatus {
+  font-size: 20rpx;
+  color: $color-error;
+}
+
+.calendarSlotScript {
+  font-size: $font-size-sm;
+  font-weight: 500;
+  color: $color-text-primary;
+  @include text-ellipsis;
+  margin-top: 4rpx;
+}
+
+.calendarSlotMeta {
+  font-size: 20rpx;
+  color: $color-text-tertiary;
+  @include text-ellipsis;
+}
+
+.calendarSlotBadge {
+  margin-top: 4rpx;
+  padding: 2rpx 8rpx;
+  font-size: 20rpx;
+  color: $color-accent-light;
+  font-weight: 500;
+  align-self: flex-start;
+}
+
+.calendarSlotEmpty {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  margin-top: 4rpx;
+}
+
+.calendarLegend {
+  display: flex;
+  justify-content: center;
+  gap: $spacing-lg;
+  padding: $spacing-md 0;
+  flex-wrap: wrap;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+}
+
+.legendDot {
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 50%;
+}
+
+.legendDotEmpty { background: $color-bg-hover; }
+.legendDotBooked { background: rgba(245, 63, 63, 0.4); }
+.legendDotCar { background: $color-accent; }
+.legendDotLocked { background: $color-primary; }
+
+.legendText {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}

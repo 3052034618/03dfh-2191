@@ -4,7 +4,8 @@ import Taro from '@tarojs/taro';
 import { Car } from '@/types';
 import StatusBadge from '@/components/StatusBadge';
 import PlayerAvatar from '@/components/PlayerAvatar';
-import { formatDate, getConfirmedCount, getRemainingCount, getGenderTip } from '@/utils';
+import { formatDate, getConfirmedCount, getRemainingCount, getGenderTip, getDepositCount } from '@/utils';
+import classnames from 'classnames';
 import styles from './index.module.scss';
 
 interface CarCardProps {
@@ -15,6 +16,10 @@ interface CarCardProps {
   onSecondary?: () => void;
   primaryText?: string;
   secondaryText?: string;
+  onViewList?: () => void;
+  onCopyInfo?: () => void;
+  onSendNotice?: () => void;
+  onManageDeposit?: () => void;
 }
 
 const CarCard: React.FC<CarCardProps> = ({
@@ -24,12 +29,19 @@ const CarCard: React.FC<CarCardProps> = ({
   onPrimary,
   onSecondary,
   primaryText,
-  secondaryText
+  secondaryText,
+  onViewList,
+  onCopyInfo,
+  onSendNotice,
+  onManageDeposit
 }) => {
   const confirmed = getConfirmedCount(car);
   const remaining = getRemainingCount(car);
   const progress = Math.min(100, (confirmed / car.minPlayers) * 100);
   const genderTip = getGenderTip(car.genderRequirement, car.players);
+  const { paid, total } = getDepositCount(car);
+  const isLocked = car.finalConfirmed && car.status === 'confirmed';
+  const showQuickActions = isLocked && car.status !== 'finished' && car.status !== 'cancelled' && (onViewList || onCopyInfo || onSendNotice || onManageDeposit);
 
   const handleClick = () => {
     if (onClick) {
@@ -87,6 +99,11 @@ const CarCard: React.FC<CarCardProps> = ({
           <View className={styles.progressText}>
             <Text className={styles.highlight}>{confirmed}</Text>
             <Text>/{car.minPlayers}人成车</Text>
+            {isLocked && (
+              <Text style={{ marginLeft: 12, color: '#00B42A', fontWeight: 500 }}>
+                定金 {paid}/{total}
+              </Text>
+            )}
           </View>
         </View>
         {remaining > 0 && (
@@ -116,7 +133,44 @@ const CarCard: React.FC<CarCardProps> = ({
         )}
       </View>
 
-      {showActions && car.status !== 'finished' && car.status !== 'cancelled' && (
+      {showQuickActions && (
+        <View className={styles.quickActions}>
+          {onViewList && (
+            <View
+              className={classnames(styles.quickBtn, styles.quickBtnOutline)}
+              onClick={(e) => { e.stopPropagation(); onViewList(); }}
+            >
+              📋 看名单
+            </View>
+          )}
+          {onCopyInfo && (
+            <View
+              className={classnames(styles.quickBtn, styles.quickBtnOutline)}
+              onClick={(e) => { e.stopPropagation(); onCopyInfo(); }}
+            >
+              📤 复制
+            </View>
+          )}
+          {onManageDeposit && (
+            <View
+              className={classnames(styles.quickBtn, styles.quickBtnOutline)}
+              onClick={(e) => { e.stopPropagation(); onManageDeposit(); }}
+            >
+              💰 定金
+            </View>
+          )}
+          {onSendNotice && (
+            <View
+              className={classnames(styles.quickBtn, styles.quickBtnPrimary)}
+              onClick={(e) => { e.stopPropagation(); onSendNotice(); }}
+            >
+              📢 发提醒
+            </View>
+          )}
+        </View>
+      )}
+
+      {showActions && !showQuickActions && car.status !== 'finished' && car.status !== 'cancelled' && (
         <View className={styles.footer}>
           {secondaryText && (
             <View

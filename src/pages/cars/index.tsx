@@ -1,10 +1,11 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, ScrollView } from '@tarojs/components';
+import Taro from '@tarojs/taro';
 import { useStore } from '@/store/useStore';
 import CarCard from '@/components/CarCard';
 import EmptyState from '@/components/EmptyState';
 import { CarStatus, Car } from '@/types';
-import { getConfirmedCount } from '@/utils';
+import { getConfirmedCount, generateInvitationText, getDepositCount } from '@/utils';
 import classnames from 'classnames';
 import styles from './index.module.scss';
 
@@ -21,7 +22,16 @@ const STATUS_OPTIONS: { label: string; value: StatusFilter }[] = [
 ];
 
 const CarsPage: React.FC = () => {
-  const { cars, currentUser, updatePlayer, confirmFinalList } = useStore();
+  const {
+    cars,
+    currentUser,
+    updatePlayer,
+    confirmFinalList,
+    sendNotice,
+    sendDepositReminder,
+    togglePlayerDeposit,
+    storeNotice
+  } = useStore();
   const [roleFilter, setRoleFilter] = useState<RoleFilter>('all');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
 
@@ -62,22 +72,113 @@ const CarsPage: React.FC = () => {
     return { captainCount, pendingConfirm, totalPlayed };
   }, [cars, currentUser.id]);
 
+  const handleViewList = (car: Car) => {
+    const confirmed = car.players.filter(p => p.confirmed);
+    const { paid, total } = getDepositCount(car);
+    const list = confirmed.map((p, i) => `${i + 1}. ${p.name}${p.depositPaid ? ' ✓已付' : ' ⏳待付'}`).join('\n');
+    Taro.showModal({
+      title: `🔒 已锁定最终名单（${paid}/${total}已付定金）`,
+      content: list,
+      showCancel: false,
+      confirmColor: '#7B4BFF'
+    });
+  };
+
+  const handleCopyInfo = (car: Car) => {
+    const text = generateInvitationText(car, storeNotice, !!car.finalConfirmed);
+    Taro.setClipboardData({
+      data: text,
+      success: () => Taro.showToast({ title: '邀请信息已复制', icon: 'success' })
+    });
+  };
+
+  const handleSendNotice = (car: Car) => {
+    if (car.noticeSent && car.depositSent) {
+      Taro.showToast({ title: '已发送过全部提醒', icon: 'none' });
+      return;
+    }
+    Taro.showModal({
+      title: '一键发送提醒',
+      content: '将向所有玩家发送定金提醒和到店须知？',
+      confirmColor: '#7B4BFF',
+      success: (res) => {
+        if (res.confirm) {
+          if (!car.depositSent) sendDepositReminder(car.id);
+          if (!car.noticeSent) sendNotice(car.id);
+          Taro.showToast({ title: '已发送全部提醒', icon: 'success' });
+        }
+      }
+    });
+  };
+
+  const handleManageDeposit = (car: Car) => {
+    const confirmed = car.players.filter(p => p.confirmed);
+    const options = confirmed.map(p =>
+      `${p.name}  ${p.depositPaid ? '✅已付' : '⏳待付'}  ¥${car.depositAmount}`
+    );
+    Taro.showActionSheet({
+      itemList: options,
+      success: (res) => {
+        const player = confirmed[res.tapIndex];
+        if (player.depositPaid) {
+          Taro.showModal({
+            title: '取消定金标记',
+            content: `确定将「${player.name}」改为未付定金？`,
+            confirmColor: '#7B4BFF',
+            success: (r) => {
+              if (r.confirm) {
+                togglePlayerDeposit(car.id, player.id, false);
+                Taro.showToast({ title: '已改为未付', icon: 'success' });
+              }
+            }
+          });
+        } else {
+          Taro.showModal({
+            title: '标记已付定金',
+            content: `确定将「${player.name}」标记为已付¥${car.depositAmount}定金？`,
+            confirmColor: '#7B4BFF',
+            success: (r) => {
+              if (r.confirm) {
+                togglePlayerDeposit(car.id, player.id, true);
+                Taro.showToast({ title: '已标记已付', icon: 'success' });
+              }
+            }
+          });
+        }
+      }
+    });
+  };
+
   const getActionProps = (car: Car) => {
     const isCaptain = car.captainId === currentUser.id;
     const me = car.players.find(p => p.id === currentUser.id);
     const confirmed = getConfirmedCount(car);
+    const isStaff = currentUser.role === 'staff' || currentUser.role === 'owner';
+    const canManage = isCaptain || isStaff;
+    const isLocked = car.finalConfirmed && car.status === 'confirmed';
 
     if (car.status === 'finished' || car.status === 'cancelled') {
       return {};
+    }
+
+    if (isLocked) {
+      const props: any = {};
+      props.onViewList = () => handleViewList(car);
+      props.onCopyInfo = () => handleCopyInfo(car);
+      if (canManage) {
+        props.onManageDeposit = () => handleManageDeposit(car);
+        if (!car.noticeSent || !car.depositSent) {
+          props.onSendNotice = () => handleSendNotice(car);
+        }
+      }
+      return props;
     }
 
     if (isCaptain) {
       if (!car.finalConfirmed && confirmed >= car.minPlayers) {
         return {
           primaryText: '确认最终名单',
-          onPrimary: () => {
-            confirmFinalList(car.id);
-          }
+          onPrimary: () => confirmFinalList(car.id)
         };
       }
       return {
@@ -89,13 +190,9 @@ const CarsPage: React.FC = () => {
     if (me && !me.confirmed) {
       return {
         primaryText: '确认参加',
-        onPrimary: () => {
-          updatePlayer(car.id, currentUser.id, { confirmed: true });
-        },
+        onPrimary: () => updatePlayer(car.id, currentUser.id, { confirmed: true }),
         secondaryText: '婉拒',
-        onSecondary: () => {
-          updatePlayer(car.id, currentUser.id, { confirmed: false });
-        }
+        onSecondary: () => updatePlayer(car.id, currentUser.id, { confirmed: false })
       };
     }
 

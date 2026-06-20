@@ -1,4 +1,4 @@
-import { Car, Player, CarStatus, ScriptGenderRequirement } from '@/types';
+import { Car, Player, CarStatus, ScriptGenderRequirement, StoreNotice } from '@/types';
 import dayjs from 'dayjs';
 
 export const formatDate = (date: string): string => {
@@ -93,4 +93,60 @@ export const generateId = (): string => {
 
 export const calcDepositTotal = (car: Car): number => {
   return getConfirmedCount(car) * car.depositAmount;
+};
+
+export const getDepositCount = (car: Car): { paid: number; total: number; unpaid: Player[] } => {
+  const confirmed = car.players.filter(p => p.confirmed);
+  const paid = confirmed.filter(p => p.depositPaid).length;
+  const unpaid = confirmed.filter(p => !p.depositPaid);
+  return { paid, total: confirmed.length, unpaid };
+};
+
+export const generateInvitationText = (
+  car: Car,
+  notice: StoreNotice,
+  isLocked: boolean
+): string => {
+  const confirmedPlayers = car.players.filter(p => p.confirmed);
+  const { paid, total } = getDepositCount(car);
+
+  if (isLocked) {
+    const playerList = confirmedPlayers
+      .map((p, i) => `${i + 1}. ${p.name}（${p.gender === 'male' ? '男' : p.gender === 'female' ? '女' : '不限'}）${p.depositPaid ? '✓已付定金' : '⏳待付定金'}`)
+      .join('\n');
+
+    return `【${car.scriptName}】🔒 车局已锁定！
+━━━━━━━━━━━━━━
+📅 时间：${formatDate(car.date)} ${car.startTime.slice(0, 5)} - ${car.endTime.slice(0, 5)}
+🏠 房间：${car.roomName}
+🎙️ DM：${car.dmName}
+🚗 车头：${car.captainName}
+👥 人数：${total}/${car.minPlayers}人（已锁定）
+💰 定金：¥${car.depositAmount}/人 · 已付 ${paid}/${total} 人
+━━━━━━━━━━━━━━
+📋 最终名单：
+${playerList}
+━━━━━━━━━━━━━━
+📌 重要提醒：
+${notice.arrivalNotice}
+${notice.lateRule}
+${notice.depositRule}
+━━━━━━━━━━━━━━
+${car.acceptStrangers ? '👉 已开启熟客补位，差人时店员会帮忙匹配靠谱玩家' : '👉 纯熟人局，拒绝空降，婉拒鸽子🕊️'}`;
+  }
+
+  return `🚗 ${car.captainName} 邀你打本啦！
+【${car.scriptName}】
+━━━━━━━━━━━━━━
+📅 时间：${formatDate(car.date)} ${car.startTime.slice(0, 5)} - ${car.endTime.slice(0, 5)}
+🏠 房间：${car.roomName}
+🎙️ DM：${car.dmName}
+👥 人数：${confirmedPlayers.length}/${car.minPlayers}人（${car.genderRequirement.male}男${car.genderRequirement.female}女${car.genderRequirement.flexible > 0 ? `+${car.genderRequirement.flexible}不限` : ''}）
+💰 人均：¥${car.price} · 定金¥${car.depositAmount}
+━━━━━━━━━━━━━━
+📝 剧本介绍：
+${car.scriptName} 是${car.acceptStrangers ? '' : '纯'}熟人私密局${car.acceptStrangers ? '，接受店员匹配熟客补位' : '，拒绝空降'}。
+💡 当前还差 ${getRemainingCount(car)} 人成车，赶紧确认上车！
+━━━━━━━━━━━━━━
+⚠️ ${notice.depositRule}`;
 };

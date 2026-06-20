@@ -64,6 +64,9 @@ export interface Player {
   confirmed: boolean;
   acceptStrangers: boolean;
   role?: string;
+  depositPaid?: boolean;
+  depositAmount?: number;
+  depositPaidAt?: string;
 }
 
 export interface Car {

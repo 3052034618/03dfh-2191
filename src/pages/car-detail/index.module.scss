@@ -431,3 +431,80 @@
 .btnFull {
   flex: 2;
 }
+
+.depositProgress {
+  background: $color-primary-bg;
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  margin-bottom: $spacing-lg;
+  border: 1px solid rgba(123, 75, 255, 0.2);
+}
+
+.depositProgressHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-sm;
+}
+
+.depositProgressTitle {
+  font-size: $font-size-sm;
+  font-weight: 600;
+  color: $color-primary-light;
+}
+
+.depositProgressValue {
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+  font-weight: 500;
+}
+
+.depositProgressBar {
+  height: 12rpx;
+  background: $color-bg-hover;
+  border-radius: $radius-round;
+  overflow: hidden;
+  margin-bottom: $spacing-xs;
+}
+
+.depositProgressFill {
+  height: 100%;
+  background: linear-gradient(90deg, $color-success 0%, #36D399 100%);
+  border-radius: $radius-round;
+  transition: width $transition-base;
+}
+
+.depositUnpaid {
+  font-size: 20rpx;
+  color: $color-error;
+}
+
+.depositMark {
+  position: absolute;
+  bottom: -4rpx;
+  right: -4rpx;
+  padding: 2rpx 10rpx;
+  border-radius: $radius-round;
+  font-size: 18rpx;
+  font-weight: 600;
+}
+
+.depositPaid {
+  background: $color-success;
+  color: #fff;
+}
+
+.depositUnpaid {
+  background: rgba(245, 63, 63, 0.9);
+  color: #fff;
+}
+
+.playerRemindBtn {
+  margin-top: 4rpx;
+  padding: 4rpx 12rpx;
+  background: rgba(255, 125, 84, 0.15);
+  color: $color-accent;
+  border-radius: $radius-xs;
+  font-size: 20rpx;
+  font-weight: 500;
+}
