@@ -1,0 +1,255 @@
+@use '@/styles/variables.scss' as *;
+
+.page {
+  min-height: 100vh;
+  background: $color-bg-page;
+  padding-bottom: 180rpx;
+}
+
+.cover {
+  width: 100%;
+  height: 560rpx;
+  position: relative;
+}
+
+.coverImg {
+  width: 100%;
+  height: 100%;
+}
+
+.coverMask {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 40%, $color-bg-page 100%);
+}
+
+.content {
+  padding: 0 $page-padding;
+  margin-top: -80rpx;
+  position: relative;
+}
+
+.headerCard {
+  background: $color-bg-card;
+  border-radius: $radius-xl;
+  padding: $spacing-xl;
+  box-shadow: 0 8rpx 32rpx rgba(0,0,0,0.3);
+}
+
+.titleRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: $spacing-md;
+  margin-bottom: $spacing-md;
+}
+
+.title {
+  font-size: $font-size-xxl;
+  font-weight: $font-weight-bold;
+  color: #fff;
+  line-height: 1.3;
+  flex: 1;
+}
+
+.price {
+  flex-shrink: 0;
+  background: linear-gradient(135deg, $color-accent, #FF5722);
+  color: #fff;
+  padding: 8rpx 24rpx;
+  border-radius: $radius-button;
+  font-weight: $font-weight-bold;
+  font-size: $font-size-lg;
+  box-shadow: 0 4rpx 12rpx rgba(255,125,84,0.4);
+}
+
+.typeTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-lg;
+}
+
+.typeTag {
+  background: $color-bg-tag;
+  color: $color-primary-light;
+  padding: 8rpx 20rpx;
+  border-radius: $radius-round;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+}
+
+.infoGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: $spacing-md;
+  padding-top: $spacing-lg;
+  border-top: 1rpx solid $color-divider;
+}
+
+.infoItem {
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.infoLabel {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.infoValue {
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  font-weight: $font-weight-semibold;
+}
+
+.genderBox {
+  display: inline-flex;
+  gap: $spacing-sm;
+  margin-top: 4rpx;
+}
+
+.genderChip {
+  padding: 6rpx 16rpx;
+  border-radius: $radius-md;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+}
+
+.maleChip {
+  background: $color-gender-tag-male;
+  color: $color-male;
+}
+
+.femaleChip {
+  background: $color-gender-tag-female;
+  color: $color-female;
+}
+
+.flexChip {
+  background: rgba(134,144,156,0.15);
+  color: $color-text-secondary;
+}
+
+.stars {
+  color: $color-accent;
+  letter-spacing: 4rpx;
+  font-size: $font-size-md;
+}
+
+.section {
+  background: $color-bg-card;
+  border-radius: $radius-xl;
+  padding: $spacing-xl;
+  margin-top: $spacing-lg;
+}
+
+.sectionTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-md;
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.sectionContent {
+  font-size: $font-size-md;
+  color: $color-text-secondary;
+  line-height: 1.8;
+}
+
+.tagList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-sm;
+}
+
+.tag {
+  background: rgba(123,75,255,0.1);
+  color: $color-primary-light;
+  font-size: $font-size-sm;
+  padding: 8rpx 20rpx;
+  border-radius: $radius-md;
+}
+
+.dmList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.dmItem {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  padding: $spacing-md;
+  background: rgba(255,255,255,0.04);
+  border-radius: $radius-md;
+}
+
+.dmAvatar {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: $radius-round;
+  flex-shrink: 0;
+}
+
+.dmInfo {
+  flex: 1;
+}
+
+.dmName {
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+  margin-bottom: 4rpx;
+}
+
+.dmRating {
+  font-size: $font-size-xs;
+  color: $color-accent;
+}
+
+.footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: $spacing-md $page-padding;
+  padding-bottom: calc(#{$spacing-md} + env(safe-area-inset-bottom));
+  background: $color-bg-page;
+  display: flex;
+  gap: $spacing-md;
+  border-top: 1rpx solid $color-divider;
+}
+
+.btn {
+  @include button-reset;
+  height: $button-height-lg;
+  border-radius: $radius-button;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  transition: all $transition-base;
+
+  &:active {
+    opacity: 0.85;
+    transform: scale(0.97);
+  }
+}
+
+.btnOutline {
+  flex: 1;
+  background: transparent;
+  color: $color-primary-light;
+  border: 2rpx solid rgba(123,75,255,0.5);
+}
+
+.btnPrimary {
+  flex: 1.5;
+  background: linear-gradient(135deg, $color-primary 0%, $color-accent 100%);
+  color: #fff;
+  box-shadow: 0 8rpx 24rpx rgba(123,75,255,0.35);
+}

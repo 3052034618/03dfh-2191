@@ -1,0 +1,93 @@
+@use '@/styles/variables.scss' as *;
+
+.page {
+  min-height: 100vh;
+  background: $color-bg-page;
+  padding-bottom: 40rpx;
+}
+
+.roleTabs {
+  display: flex;
+  background: $color-bg-card;
+  padding: $spacing-sm;
+  margin: $spacing-md $page-padding;
+  border-radius: $radius-lg;
+  gap: $spacing-sm;
+}
+
+.roleTab {
+  flex: 1;
+  padding: $spacing-md 0;
+  text-align: center;
+  border-radius: $radius-md;
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  font-weight: $font-weight-medium;
+  transition: all $transition-base;
+}
+
+.roleTabActive {
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-dark 100%);
+  color: #fff;
+  box-shadow: 0 4rpx 12rpx rgba(123,75,255,0.3);
+}
+
+.statusTabs {
+  display: flex;
+  gap: $spacing-sm;
+  padding: 0 $page-padding $spacing-md;
+  overflow-x: auto;
+  @include scroll-x-container;
+}
+
+.statusTab {
+  @include scroll-x-item(auto);
+  padding: 12rpx 28rpx;
+  border-radius: $radius-button;
+  background: $color-bg-card;
+  color: $color-text-secondary;
+  font-size: $font-size-sm;
+  white-space: nowrap;
+  transition: all $transition-base;
+}
+
+.statusTabActive {
+  background: rgba(255,125,84,0.15);
+  color: $color-accent;
+  font-weight: $font-weight-semibold;
+}
+
+.listArea {
+  padding: 0 $page-padding;
+}
+
+.statsRow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: $spacing-md;
+  padding: 0 $page-padding $spacing-lg;
+}
+
+.statCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg $spacing-md;
+  text-align: center;
+}
+
+.statNum {
+  font-size: 40rpx;
+  font-weight: $font-weight-bold;
+  color: $color-accent;
+  line-height: 1.2;
+}
+
+.stat1 .statNum { color: $color-primary-light; }
+.stat2 .statNum { color: $color-accent; }
+.stat3 .statNum { color: $color-success; }
+
+.statLabel {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  margin-top: 8rpx;
+}

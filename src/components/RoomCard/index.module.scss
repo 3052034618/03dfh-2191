@@ -1,0 +1,101 @@
+@use '@/styles/variables.scss' as *;
+
+.card {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+  box-shadow: $shadow-card;
+  border: 3rpx solid transparent;
+  transition: all $transition-base;
+
+  &:active {
+    opacity: 0.92;
+    transform: scale(0.98);
+  }
+}
+
+.selected {
+  border-color: $color-primary;
+  background: rgba(123, 75, 255, 0.08);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-sm;
+}
+
+.name {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.capacityBadge {
+  background: rgba(0, 180, 42, 0.12);
+  color: $color-success;
+  font-size: $font-size-xs;
+  padding: 4rpx 14rpx;
+  border-radius: $radius-round;
+  font-weight: $font-weight-medium;
+}
+
+.theme {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  margin-bottom: $spacing-md;
+}
+
+.slotsTitle {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+  margin-bottom: $spacing-sm;
+}
+
+.slotsWrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-sm;
+}
+
+.slotItem {
+  padding: 10rpx 20rpx;
+  border-radius: $radius-md;
+  background: $color-bg-hover;
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  transition: all $transition-base;
+
+  &:active {
+    opacity: 0.8;
+  }
+}
+
+.slotAvailable {
+  background: rgba(123, 75, 255, 0.12);
+  color: $color-primary-light;
+  font-weight: $font-weight-medium;
+}
+
+.slotSelected {
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-dark 100%);
+  color: #fff;
+  box-shadow: 0 4rpx 12rpx rgba(123, 75, 255, 0.3);
+}
+
+.slotDisabled {
+  opacity: 0.35;
+  background: $color-bg-hover;
+  color: $color-text-disabled;
+  text-decoration: line-through;
+  pointer-events: none;
+}
+
+.dateLabel {
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+  margin-right: 4rpx;
+}

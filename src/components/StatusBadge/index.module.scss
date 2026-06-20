@@ -1,0 +1,41 @@
+@use '@/styles/variables.scss' as *;
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6rpx 16rpx;
+  border-radius: $radius-round;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  white-space: nowrap;
+}
+
+.recruiting {
+  background: rgba(255, 125, 84, 0.15);
+  color: #FF7D54;
+}
+
+.almostFull {
+  background: rgba(255, 125, 0, 0.15);
+  color: #FF7D00;
+}
+
+.confirmed {
+  background: rgba(0, 180, 42, 0.15);
+  color: #00B42A;
+}
+
+.playing {
+  background: rgba(123, 75, 255, 0.15);
+  color: #7B4BFF;
+}
+
+.finished {
+  background: rgba(134, 144, 156, 0.15);
+  color: #86909C;
+}
+
+.cancelled {
+  background: rgba(201, 205, 212, 0.15);
+  color: #C9CDD4;
+}

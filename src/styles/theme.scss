@@ -1,0 +1,48 @@
+// ============================================
+// 剧本杀熟客约本 - 主题配色变量
+// ============================================
+
+// 品牌主题色：神秘紫（契合推理悬疑氛围）
+$color-primary: #7B4BFF;
+$color-primary-light: #9B7DFF;
+$color-primary-dark: #5C35CC;
+$color-primary-bg: rgba(123, 75, 255, 0.12);
+
+// 辅助色：暖橙（CTA和重要提示）
+$color-accent: #FF7D54;
+$color-accent-light: #FFA07A;
+$color-accent-bg: rgba(255, 125, 84, 0.12);
+
+// 功能色
+$color-success: #00B42A;
+$color-warning: #FF7D00;
+$color-error: #F53F3F;
+$color-info: #7B4BFF;
+
+// 背景色（深色悬疑主题）
+$color-bg-page: #1A1A2E;
+$color-bg-page-light: #F5F6F7;
+$color-bg-card: #252542;
+$color-bg-card-light: #FFFFFF;
+$color-bg-hover: #35355A;
+$color-bg-tag: rgba(123, 75, 255, 0.18);
+
+// 文本色
+$color-text-primary: #FFFFFF;
+$color-text-primary-light: #1D2129;
+$color-text-secondary: #B0B0C8;
+$color-text-secondary-light: #4E5969;
+$color-text-tertiary: #8686A8;
+$color-text-disabled: #5A5A7A;
+$color-text-white: #FFFFFF;
+
+// 边框色
+$color-border: #3D3D5C;
+$color-border-light: #E5E6EB;
+$color-divider: #2E2E4A;
+
+// 业务色
+$color-male: #4080FF;
+$color-female: #F53F7F;
+$color-gender-tag-male: rgba(64, 128, 255, 0.15);
+$color-gender-tag-female: rgba(245, 63, 127, 0.15);

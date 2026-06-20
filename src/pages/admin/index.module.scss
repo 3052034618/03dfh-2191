@@ -1,0 +1,596 @@
+@use '@/styles/variables.scss' as *;
+
+.page {
+  min-height: 100vh;
+  background: $color-bg-page;
+  padding-bottom: 40rpx;
+}
+
+.tabs {
+  display: flex;
+  padding: 0 $page-padding;
+  background: $color-bg-card;
+  border-bottom: 1px solid $color-border;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.tabItem {
+  flex: 1;
+  padding: $spacing-md 0;
+  text-align: center;
+  font-size: $font-size-md;
+  color: $color-text-tertiary;
+  position: relative;
+  transition: color $transition-fast;
+  font-weight: 500;
+}
+
+.tabItemActive {
+  color: $color-primary-light;
+  font-weight: $font-weight-semibold;
+}
+
+.tabItemActive::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 48rpx;
+  height: 4rpx;
+  background: $color-primary;
+  border-radius: 2rpx;
+}
+
+.tabBadge {
+  display: inline-block;
+  min-width: 32rpx;
+  height: 32rpx;
+  line-height: 32rpx;
+  padding: 0 8rpx;
+  background: $color-accent;
+  color: #fff;
+  font-size: 20rpx;
+  border-radius: $radius-round;
+  margin-left: 6rpx;
+  font-weight: $font-weight-semibold;
+  vertical-align: middle;
+}
+
+.statsRow {
+  display: flex;
+  gap: $spacing-md;
+  padding: $spacing-lg $page-padding;
+}
+
+.statCard {
+  flex: 1;
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-md;
+  border: 1px solid $color-border;
+}
+
+.statValue {
+  font-size: $font-size-xxl;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  margin-bottom: 4rpx;
+}
+
+.statLabel {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.statAccent .statValue {
+  color: $color-accent-light;
+}
+
+.statSuccess .statValue {
+  color: $color-success;
+}
+
+.statPrimary .statValue {
+  color: $color-primary-light;
+}
+
+.section {
+  margin: 0 $page-padding $spacing-md;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-md;
+}
+
+.sectionTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.actionLink {
+  font-size: $font-size-sm;
+  color: $color-primary-light;
+}
+
+.scriptItem {
+  background: $color-bg-card;
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  display: flex;
+  gap: $spacing-md;
+  margin-bottom: $spacing-sm;
+  border: 1px solid $color-border;
+}
+
+.scriptCover {
+  width: 120rpx;
+  height: 160rpx;
+  border-radius: $radius-sm;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.scriptCoverImg {
+  width: 100%;
+  height: 100%;
+}
+
+.scriptBody {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.scriptTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.scriptName {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: 6rpx;
+}
+
+.statusTag {
+  padding: 4rpx 12rpx;
+  border-radius: $radius-xs;
+  font-size: 20rpx;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.statusInStock {
+  background: rgba(0, 180, 42, 0.15);
+  color: $color-success;
+}
+
+.statusOutOfStock {
+  background: rgba(245, 63, 63, 0.15);
+  color: $color-error;
+}
+
+.scriptMeta {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  margin-bottom: 6rpx;
+}
+
+.scriptBottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tagList {
+  display: flex;
+  gap: 6rpx;
+}
+
+.miniTag {
+  padding: 2rpx 10rpx;
+  background: $color-primary-bg;
+  color: $color-primary-light;
+  border-radius: $radius-xs;
+  font-size: 20rpx;
+}
+
+.switchMini {
+  transform: scale(0.8);
+  transform-origin: right center;
+}
+
+.roomItem {
+  background: $color-bg-card;
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  margin-bottom: $spacing-sm;
+  border: 1px solid $color-border;
+}
+
+.roomHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-md;
+}
+
+.roomName {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.roomTheme {
+  font-size: $font-size-xs;
+  color: $color-primary-light;
+  background: $color-primary-bg;
+  padding: 4rpx 12rpx;
+  border-radius: $radius-xs;
+}
+
+.roomCapacity {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}
+
+.slotGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+}
+
+.slotItem {
+  width: calc(33.33% - 8rpx);
+  padding: 12rpx 0;
+  text-align: center;
+  border-radius: $radius-sm;
+  font-size: $font-size-xs;
+  font-weight: 500;
+  border: 1px solid $color-border;
+  transition: all $transition-fast;
+}
+
+.slotAvailable {
+  background: $color-bg-hover;
+  color: $color-text-secondary;
+  border-color: transparent;
+}
+
+.slotActive {
+  background: rgba(123, 75, 255, 0.2);
+  color: $color-primary-light;
+  border-color: $color-primary;
+}
+
+.slotBooked {
+  background: rgba(245, 63, 63, 0.08);
+  color: $color-error;
+  border-color: transparent;
+  opacity: 0.6;
+}
+
+.dmItem {
+  background: $color-bg-card;
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  display: flex;
+  gap: $spacing-md;
+  margin-bottom: $spacing-sm;
+  border: 1px solid $color-border;
+}
+
+.dmAvatar {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 2px solid $color-border;
+}
+
+.dmAvatarImg {
+  width: 100%;
+  height: 100%;
+}
+
+.dmBody {
+  flex: 1;
+}
+
+.dmTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6rpx;
+}
+
+.dmName {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.dmRating {
+  font-size: $font-size-sm;
+  color: $color-accent-light;
+  font-weight: 500;
+}
+
+.dmScripts {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  margin-bottom: 6rpx;
+  @include text-ellipsis;
+}
+
+.dmSlots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+}
+
+.dmSlotTag {
+  padding: 2rpx 10rpx;
+  border-radius: $radius-xs;
+  font-size: 20rpx;
+  font-weight: 500;
+}
+
+.dmSlotFree {
+  background: rgba(0, 180, 42, 0.12);
+  color: $color-success;
+}
+
+.dmSlotBusy {
+  background: rgba(245, 63, 63, 0.12);
+  color: $color-error;
+}
+
+.carItem {
+  background: $color-bg-card;
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  margin-bottom: $spacing-sm;
+  border: 1px solid $color-border;
+  transition: border-color $transition-fast;
+}
+
+.carItemHighlight {
+  border-color: $color-accent;
+  background: linear-gradient(135deg, rgba(255, 125, 84, 0.08) 0%, transparent 40%);
+}
+
+.carTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: $spacing-sm;
+}
+
+.carName {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: 4rpx;
+}
+
+.carMeta {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.highlightBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4rpx;
+  padding: 4rpx 12rpx;
+  background: $color-accent-bg;
+  color: $color-accent-light;
+  border-radius: $radius-round;
+  font-size: 20rpx;
+  font-weight: 500;
+  margin-left: 8rpx;
+}
+
+.carProgressRow {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-sm;
+}
+
+.carProgressBar {
+  flex: 1;
+  height: 12rpx;
+  background: $color-bg-hover;
+  border-radius: $radius-round;
+  overflow: hidden;
+}
+
+.carProgressFill {
+  height: 100%;
+  border-radius: $radius-round;
+  transition: width $transition-base;
+}
+
+.fillRecruiting {
+  background: linear-gradient(90deg, $color-accent 0%, $color-accent-light 100%);
+}
+
+.fillAlmost {
+  background: linear-gradient(90deg, $color-warning 0%, $color-accent 100%);
+}
+
+.fillDone {
+  background: linear-gradient(90deg, $color-success 0%, #36D399 100%);
+}
+
+.carProgressText {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-text-secondary;
+  min-width: 100rpx;
+  text-align: right;
+}
+
+.carStatusRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: $spacing-xs;
+}
+
+.carTags {
+  display: flex;
+  gap: 8rpx;
+  flex-wrap: wrap;
+}
+
+.carTag {
+  padding: 4rpx 12rpx;
+  border-radius: $radius-xs;
+  font-size: 20rpx;
+  font-weight: 500;
+}
+
+.tagCaptain {
+  background: $color-primary-bg;
+  color: $color-primary-light;
+}
+
+.tagDepositSent {
+  background: rgba(0, 180, 42, 0.12);
+  color: $color-success;
+}
+
+.tagDepositPending {
+  background: rgba(255, 125, 0, 0.12);
+  color: $color-warning;
+}
+
+.tagNoticeSent {
+  background: rgba(0, 180, 42, 0.12);
+  color: $color-success;
+}
+
+.tagNoticePending {
+  background: rgba(245, 63, 63, 0.12);
+  color: $color-error;
+}
+
+.carActions {
+  display: flex;
+  gap: 8rpx;
+}
+
+.carBtn {
+  @include button-reset;
+  padding: 8rpx 20rpx;
+  border-radius: $radius-button;
+  font-size: 22rpx;
+  font-weight: 500;
+}
+
+.btnView {
+  background: $color-bg-hover;
+  color: $color-text-secondary;
+  border: 1px solid $color-border;
+}
+
+.btnQuick {
+  background: linear-gradient(135deg, $color-accent 0%, #E66F4B 100%);
+  color: $color-text-white;
+  box-shadow: 0 2rpx 8rpx rgba(255, 125, 84, 0.3);
+}
+
+.btnDisabled {
+  opacity: 0.5;
+}
+
+.noticeSettings {
+  background: $color-bg-card;
+  border-radius: $radius-md;
+  padding: $spacing-lg;
+  border: 1px solid $color-border;
+}
+
+.noticeGroup {
+  margin-bottom: $spacing-lg;
+}
+
+.noticeGroup:last-child {
+  margin-bottom: 0;
+}
+
+.noticeLabel {
+  font-size: $font-size-sm;
+  font-weight: 500;
+  color: $color-primary-light;
+  margin-bottom: $spacing-xs;
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+}
+
+.noticeTextarea {
+  width: 100%;
+  min-height: 140rpx;
+  padding: $spacing-md;
+  background: $color-bg-hover;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  line-height: $line-height-normal;
+  box-sizing: border-box;
+}
+
+.filterRow {
+  display: flex;
+  gap: 12rpx;
+  margin-bottom: $spacing-md;
+  flex-wrap: wrap;
+}
+
+.filterChip {
+  padding: 8rpx 20rpx;
+  border-radius: $radius-round;
+  background: $color-bg-card;
+  border: 1px solid $color-border;
+  color: $color-text-tertiary;
+  font-size: $font-size-sm;
+}
+
+.filterChipActive {
+  background: $color-primary-bg;
+  border-color: $color-primary;
+  color: $color-primary-light;
+  font-weight: 500;
+}
+
+.emptyWrap {
+  padding: 80rpx 40rpx;
+  text-align: center;
+}
+
+.emptyIcon {
+  font-size: 80rpx;
+  margin-bottom: $spacing-md;
+}
+
+.emptyText {
+  font-size: $font-size-md;
+  color: $color-text-secondary;
+}

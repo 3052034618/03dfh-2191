@@ -1,0 +1,420 @@
+@use '@/styles/variables.scss' as *;
+
+.page {
+  min-height: 100vh;
+  background: $color-bg-page;
+  padding-bottom: 180rpx;
+}
+
+.hero {
+  padding: $spacing-lg $page-padding;
+  background: linear-gradient(180deg, rgba(123, 75, 255, 0.2) 0%, transparent 100%);
+}
+
+.inviteBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 8rpx 20rpx;
+  background: $color-primary-bg;
+  border: 1px solid rgba(123, 75, 255, 0.3);
+  border-radius: $radius-round;
+  color: $color-primary-light;
+  font-size: $font-size-sm;
+  font-weight: 500;
+  margin-bottom: $spacing-md;
+}
+
+.inviteTitle {
+  font-size: $font-size-xxl;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  line-height: $line-height-tight;
+  margin-bottom: $spacing-sm;
+}
+
+.inviteSubtitle {
+  font-size: $font-size-md;
+  color: $color-text-secondary;
+  line-height: $line-height-normal;
+}
+
+.scriptCard {
+  margin: $spacing-md $page-padding;
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  border: 1px solid $color-border;
+}
+
+.scriptHeader {
+  display: flex;
+  gap: $spacing-md;
+  margin-bottom: $spacing-lg;
+}
+
+.scriptCover {
+  width: 160rpx;
+  height: 220rpx;
+  border-radius: $radius-md;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.scriptCoverImg {
+  width: 100%;
+  height: 100%;
+}
+
+.scriptInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.scriptName {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  line-height: $line-height-tight;
+  margin-bottom: $spacing-sm;
+}
+
+.typeTag {
+  display: inline-block;
+  padding: 4rpx 16rpx;
+  background: $color-primary-bg;
+  color: $color-primary-light;
+  border-radius: $radius-xs;
+  font-size: $font-size-xs;
+  margin-right: $spacing-sm;
+  margin-bottom: $spacing-sm;
+}
+
+.tagList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-xs;
+}
+
+.metaRow {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  margin-bottom: 6rpx;
+}
+
+.highlight {
+  color: $color-text-secondary;
+  font-weight: 500;
+}
+
+.infoSection {
+  margin: $spacing-md $page-padding;
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  border: 1px solid $color-border;
+}
+
+.sectionTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-lg;
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.timeBox {
+  background: $color-primary-bg;
+  border-radius: $radius-md;
+  padding: $spacing-md $spacing-lg;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-md;
+}
+
+.timeMain {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-primary-light;
+}
+
+.timeSub {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.infoRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-md 0;
+  border-bottom: 1px solid $color-divider;
+}
+
+.infoRow:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.infoRow:first-child {
+  padding-top: 0;
+}
+
+.infoLabel {
+  font-size: $font-size-md;
+  color: $color-text-secondary;
+}
+
+.infoValue {
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  font-weight: 500;
+}
+
+.playersPreview {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+}
+
+.avatarStack {
+  display: flex;
+  align-items: center;
+}
+
+.miniAvatar {
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 50%;
+  border: 2px solid $color-bg-card;
+  margin-left: -12rpx;
+  background: $color-bg-hover;
+  overflow: hidden;
+}
+
+.miniAvatar:first-child {
+  margin-left: 0;
+}
+
+.miniAvatarImg {
+  width: 100%;
+  height: 100%;
+}
+
+.confirmCard {
+  margin: $spacing-md $page-padding;
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  border: 1px solid $color-border;
+}
+
+.formGroup {
+  margin-bottom: $spacing-lg;
+}
+
+.formLabel {
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  font-weight: 500;
+  margin-bottom: $spacing-md;
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+}
+
+.formLabelRequired {
+  color: $color-error;
+}
+
+.genderOptions {
+  display: flex;
+  gap: $spacing-md;
+}
+
+.genderOption {
+  flex: 1;
+  padding: $spacing-md;
+  border: 2px solid $color-border;
+  border-radius: $radius-md;
+  text-align: center;
+  transition: all $transition-fast;
+}
+
+.genderOptionActiveMale {
+  border-color: $color-male;
+  background: rgba(64, 128, 255, 0.12);
+}
+
+.genderOptionActiveFemale {
+  border-color: $color-female;
+  background: rgba(245, 63, 127, 0.12);
+}
+
+.genderEmoji {
+  font-size: $font-size-xxl;
+  margin-bottom: $spacing-xs;
+}
+
+.genderText {
+  font-size: $font-size-md;
+  color: $color-text-secondary;
+}
+
+.genderOptionActiveMale .genderText {
+  color: $color-male;
+  font-weight: 500;
+}
+
+.genderOptionActiveFemale .genderText {
+  color: $color-female;
+  font-weight: 500;
+}
+
+.bringCountRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-md $spacing-lg;
+  background: $color-bg-hover;
+  border-radius: $radius-md;
+}
+
+.bringLabel {
+  font-size: $font-size-md;
+  color: $color-text-secondary;
+}
+
+.counter {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+}
+
+.counterBtn {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  background: $color-bg-card;
+  border: 1px solid $color-border;
+  color: $color-text-secondary;
+  font-size: $font-size-lg;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: $font-weight-semibold;
+}
+
+.counterBtnDisabled {
+  opacity: 0.4;
+}
+
+.counterValue {
+  font-size: $font-size-xl;
+  color: $color-text-primary;
+  font-weight: $font-weight-semibold;
+  min-width: 48rpx;
+  text-align: center;
+}
+
+.switchRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-md;
+  background: $color-bg-hover;
+  border-radius: $radius-md;
+}
+
+.switchLabel {
+  flex: 1;
+}
+
+.switchTitle {
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  font-weight: 500;
+  margin-bottom: 4rpx;
+}
+
+.switchDesc {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  line-height: $line-height-tight;
+}
+
+.tipBox {
+  margin: $spacing-md $page-padding;
+  background: $color-accent-bg;
+  border-radius: $radius-md;
+  padding: $spacing-md $spacing-lg;
+  border-left: 4px solid $color-accent;
+}
+
+.tipText {
+  font-size: $font-size-sm;
+  color: $color-accent-light;
+  line-height: $line-height-normal;
+}
+
+.footerBar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: $spacing-md $page-padding;
+  padding-bottom: calc(#{$spacing-md} + env(safe-area-inset-bottom));
+  background: $color-bg-card;
+  border-top: 1px solid $color-border;
+  display: flex;
+  gap: $spacing-md;
+}
+
+.btn {
+  @include button-reset;
+  height: $button-height-lg;
+  border-radius: $radius-button;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  flex: 1;
+}
+
+.btnSecondary {
+  background: $color-bg-hover;
+  color: $color-text-secondary;
+  border: 1px solid $color-border;
+}
+
+.btnPrimary {
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-dark 100%);
+  color: $color-text-white;
+  box-shadow: 0 4rpx 16rpx rgba(123, 75, 255, 0.35);
+}
+
+.emptyState {
+  padding: 120rpx 60rpx;
+  text-align: center;
+}
+
+.emptyIcon {
+  font-size: 120rpx;
+  margin-bottom: $spacing-lg;
+}
+
+.emptyText {
+  font-size: $font-size-lg;
+  color: $color-text-secondary;
+  margin-bottom: $spacing-sm;
+}
+
+.emptySub {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}

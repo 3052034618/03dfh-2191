@@ -1,0 +1,249 @@
+@use '@/styles/variables.scss' as *;
+
+.page {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #1A1A2E 0%, #252542 40%, #1A1A2E 100%);
+  padding-bottom: 40rpx;
+}
+
+.hero {
+  padding: $spacing-lg $page-padding $spacing-md;
+  position: relative;
+}
+
+.heroBg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 400rpx;
+  background: radial-gradient(ellipse at 20% 0%, rgba(123, 75, 255, 0.25) 0%, transparent 60%),
+              radial-gradient(ellipse at 80% 20%, rgba(255, 125, 84, 0.18) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.greeting {
+  font-size: $font-size-xxl;
+  font-weight: $font-weight-bold;
+  color: #fff;
+  margin-bottom: 8rpx;
+}
+
+.subGreeting {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  margin-bottom: $spacing-xl;
+}
+
+.quickGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: $spacing-md;
+  background: rgba(37, 37, 66, 0.8);
+  backdrop-filter: blur(20rpx);
+  border-radius: $radius-xl;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+}
+
+.quickItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+
+  &:active {
+    opacity: 0.7;
+    transform: scale(0.95);
+  }
+}
+
+.quickIcon {
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: $radius-lg;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 44rpx;
+}
+
+.q1 { background: linear-gradient(135deg, rgba(123,75,255,0.3), rgba(123,75,255,0.1)); }
+.q2 { background: linear-gradient(135deg, rgba(255,125,84,0.3), rgba(255,125,84,0.1)); }
+.q3 { background: linear-gradient(135deg, rgba(0,180,42,0.25), rgba(0,180,42,0.08)); }
+.q4 { background: linear-gradient(135deg, rgba(64,128,255,0.3), rgba(64,128,255,0.1)); }
+
+.quickText {
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+  font-weight: $font-weight-medium;
+}
+
+.section {
+  padding: $spacing-md $page-padding 0;
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-md;
+}
+
+.sectionTitle {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-semibold;
+  color: #fff;
+}
+
+.sectionMore {
+  font-size: $font-size-sm;
+  color: $color-primary-light;
+}
+
+.carReminder {
+  background: linear-gradient(135deg, rgba(255,125,84,0.2) 0%, rgba(123,75,255,0.2) 100%);
+  border-radius: $radius-xl;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+  border: 1rpx solid rgba(255,125,84,0.25);
+}
+
+.reminderTitle {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: #fff;
+  margin-bottom: $spacing-md;
+}
+
+.reminderBadge {
+  background: $color-accent;
+  color: #fff;
+  font-size: 22rpx;
+  padding: 4rpx 12rpx;
+  border-radius: $radius-round;
+  font-weight: $font-weight-semibold;
+}
+
+.reminderItem {
+  background: rgba(255,255,255,0.06);
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  margin-bottom: $spacing-sm;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  &:active {
+    opacity: 0.8;
+  }
+}
+
+.reminderScript {
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  color: #fff;
+  margin-bottom: 8rpx;
+}
+
+.reminderMeta {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  display: flex;
+  gap: $spacing-md;
+  flex-wrap: wrap;
+}
+
+.typeTabs {
+  display: flex;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-md;
+  overflow-x: auto;
+  padding-bottom: 4rpx;
+  @include scroll-x-container;
+}
+
+.typeTab {
+  @include scroll-x-item(auto);
+  padding: 12rpx 28rpx;
+  border-radius: $radius-button;
+  background: $color-bg-card;
+  color: $color-text-secondary;
+  font-size: $font-size-sm;
+  white-space: nowrap;
+  transition: all $transition-base;
+}
+
+.typeTabActive {
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-dark 100%);
+  color: #fff;
+  box-shadow: 0 4rpx 16rpx rgba(123,75,255,0.3);
+  font-weight: $font-weight-medium;
+}
+
+.roomsScroll {
+  @include scroll-x-container;
+  margin: 0 (-$page-padding);
+  padding: 0 $page-spacing $spacing-md;
+}
+
+.roomPreview {
+  @include scroll-x-item(520rpx);
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-md;
+  margin-right: $spacing-md;
+  box-shadow: $shadow-card;
+  vertical-align: top;
+
+  &:active {
+    opacity: 0.85;
+    transform: scale(0.98);
+  }
+}
+
+.roomHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8rpx;
+}
+
+.roomName {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.roomCapacity {
+  font-size: $font-size-xs;
+  color: $color-success;
+  background: rgba(0,180,42,0.12);
+  padding: 4rpx 14rpx;
+  border-radius: $radius-round;
+}
+
+.roomTheme {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  margin-bottom: $spacing-md;
+}
+
+.roomSlots {
+  display: flex;
+  gap: $spacing-sm;
+  flex-wrap: wrap;
+}
+
+.roomSlot {
+  padding: 8rpx 18rpx;
+  background: rgba(123,75,255,0.12);
+  color: $color-primary-light;
+  font-size: 24rpx;
+  border-radius: $radius-md;
+  font-weight: $font-weight-medium;
+}
